@@ -1,13 +1,13 @@
 <template>
   <div style="padding: 16px; max-width: 900px; margin: 0 auto">
-    <h2 style="margin-bottom: 12px">My Blog</h2>
+    <h2 style="margin-bottom: 12px">{{ site.siteName }}</h2>
 
     <div style="display: flex; gap: 12px; align-items: center; margin-bottom: 12px">
       <el-input v-model="keyword" placeholder="Search title..." style="max-width: 240px" clearable />
       <el-button type="primary" @click="fetchList">Search</el-button>
     </div>
 
-    <el-card v-for="p in list" :key="p.id" style="margin-bottom: 12px">
+    <el-card v-for="p in list" :key="p.id" style="margin-bottom: 12px" v-loading="loading">
       <div style="display: flex; justify-content: space-between; gap: 12px">
         <div>
           <router-link :to="`/post/${p.id}`" style="font-size: 18px; font-weight: 600; text-decoration: none">
@@ -39,31 +39,21 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
-import { getPosts, type PostListItemVO } from '../api/posts'
+import { onMounted } from 'vue'
+import { storeToRefs } from 'pinia'
+import { useSiteStore } from '../stores/site'
+import { usePostsStore } from '../stores/posts'
 
-const loading = ref(false)
-const list = ref<PostListItemVO[]>([])
-const total = ref(0)
-
-const pageNum = ref(1)
-const pageSize = ref(10)
-const keyword = ref('')
+const site = useSiteStore()
+const posts = usePostsStore()
+const { loading, list, total, pageNum, pageSize, keyword } = storeToRefs(posts)
 
 async function fetchList() {
-  loading.value = true
-  try {
-    const res = await getPosts({
-      pageNum: pageNum.value,
-      pageSize: pageSize.value,
-      keyword: keyword.value || undefined,
-    })
-    list.value = res.list
-    total.value = res.total
-  } finally {
-    loading.value = false
-  }
+  await posts.fetch()
 }
 
-onMounted(fetchList)
+onMounted(async () => {
+  await site.refresh()
+  await fetchList()
+})
 </script>

@@ -1,6 +1,7 @@
 package com.example.blog.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.example.blog.common.BizException;
@@ -102,6 +103,15 @@ public class PostService {
         if (post == null || post.getIsDeleted() != null && post.getIsDeleted() == 1 || !"PUBLISHED".equals(post.getStatus())) {
             throw new BizException(ErrorCodes.NOT_FOUND, "post not found");
         }
+
+        // atomic increment view_count
+        postMapper.update(null,
+                Wrappers.<Post>lambdaUpdate()
+                        .setSql("view_count = view_count + 1")
+                        .eq(Post::getId, id)
+        );
+        // reload to get latest count
+        post = postMapper.selectById(id);
 
         PostDetailVO vo = new PostDetailVO();
         vo.setId(post.getId());

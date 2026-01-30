@@ -8,6 +8,8 @@
         <el-menu-item index="/admin/posts/new">New Post</el-menu-item>
         <el-menu-item index="/admin/categories">Categories</el-menu-item>
         <el-menu-item index="/admin/tags">Tags</el-menu-item>
+        <el-menu-item index="/admin/comments">Comments</el-menu-item>
+        <el-menu-item index="/admin/settings">Settings</el-menu-item>
       </el-menu>
     </el-aside>
 

@@ -4,6 +4,10 @@ export interface AdminDashboardStatsVO {
   total: number
   draft: number
   published: number
+  categories: number
+  tags: number
+  commentsPending: number
+  totalViews: number
 }
 
 export function adminDashboardStats() {

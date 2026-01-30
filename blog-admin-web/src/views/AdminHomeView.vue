@@ -33,6 +33,26 @@
                 {{ stats.published }}
               </el-link>
             </el-descriptions-item>
+            <el-descriptions-item label="Categories">
+              <el-link type="primary" :underline="false" @click="router.push('/admin/categories')">
+                {{ stats.categories }}
+              </el-link>
+            </el-descriptions-item>
+            <el-descriptions-item label="Tags">
+              <el-link type="primary" :underline="false" @click="router.push('/admin/tags')">
+                {{ stats.tags }}
+              </el-link>
+            </el-descriptions-item>
+            <el-descriptions-item label="Comments pending">
+              <el-link type="primary" :underline="false" @click="goComments()">
+                {{ stats.commentsPending }}
+              </el-link>
+            </el-descriptions-item>
+            <el-descriptions-item label="Total views">
+              <el-link type="primary" :underline="false">
+                {{ stats.totalViews }}
+              </el-link>
+            </el-descriptions-item>
           </el-descriptions>
 
           <div v-if="statsError" style="margin-top: 8px; color: var(--el-color-danger)">
@@ -127,6 +147,10 @@ const stats = reactive({
   total: 0,
   draft: 0,
   published: 0,
+  categories: 0,
+  tags: 0,
+  commentsPending: 0,
+  totalViews: 0,
 })
 
 const recentLoading = ref(false)
@@ -137,6 +161,10 @@ function goPosts(status?: string) {
   router.push({ path: '/admin/posts', query: { status: status || undefined } })
 }
 
+function goComments() {
+  router.push({ path: '/admin/comments', query: { status: 'PENDING' } })
+}
+
 async function loadStats() {
   statsLoading.value = true
   statsError.value = null
@@ -145,6 +173,10 @@ async function loadStats() {
     stats.total = s.total
     stats.draft = s.draft
     stats.published = s.published
+    stats.categories = s.categories
+    stats.tags = s.tags
+    stats.commentsPending = s.commentsPending
+    stats.totalViews = s.totalViews
   } catch (e) {
     statsError.value = 'Failed to load stats. Please check backend /admin/dashboard/stats.'
   } finally {

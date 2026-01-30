@@ -8,6 +8,8 @@ const PostsView = () => import('../views/PostsView.vue')
 const PostEditView = () => import('../views/PostEditView.vue')
 const CategoriesView = () => import('../views/CategoriesView.vue')
 const TagsView = () => import('../views/TagsView.vue')
+const CommentsView = () => import('../views/CommentsView.vue')
+const SettingsView = () => import('../views/SettingsView.vue')
 
 export const router = createRouter({
   history: createWebHistory(),
@@ -53,6 +55,12 @@ export const router = createRouter({
           name: 'tags',
           component: TagsView,
         },
+        {
+          path: 'comments',
+          name: 'comments',
+          component: CommentsView,
+        },
+        { path: 'settings', name: 'settings', component: SettingsView },
       ],
     },
   ],
