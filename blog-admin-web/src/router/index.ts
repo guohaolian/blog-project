@@ -2,9 +2,12 @@ import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 
 const LoginView = () => import('../views/LoginView.vue')
+const AdminLayout = () => import('../layouts/AdminLayout.vue')
 const AdminHomeView = () => import('../views/AdminHomeView.vue')
 const PostsView = () => import('../views/PostsView.vue')
 const PostEditView = () => import('../views/PostEditView.vue')
+const CategoriesView = () => import('../views/CategoriesView.vue')
+const TagsView = () => import('../views/TagsView.vue')
 
 export const router = createRouter({
   history: createWebHistory(),
@@ -17,27 +20,40 @@ export const router = createRouter({
     },
     {
       path: '/admin',
-      name: 'admin',
-      component: AdminHomeView,
+      component: AdminLayout,
       meta: { requiresAuth: true },
-    },
-    {
-      path: '/posts',
-      name: 'posts',
-      component: PostsView,
-      meta: { requiresAuth: true },
-    },
-    {
-      path: '/posts/new',
-      name: 'post-new',
-      component: PostEditView,
-      meta: { requiresAuth: true },
-    },
-    {
-      path: '/posts/:id/edit',
-      name: 'post-edit',
-      component: PostEditView,
-      meta: { requiresAuth: true },
+      children: [
+        {
+          path: '',
+          name: 'admin-home',
+          component: AdminHomeView,
+        },
+        {
+          path: 'posts',
+          name: 'posts',
+          component: PostsView,
+        },
+        {
+          path: 'posts/new',
+          name: 'post-new',
+          component: PostEditView,
+        },
+        {
+          path: 'posts/:id/edit',
+          name: 'post-edit',
+          component: PostEditView,
+        },
+        {
+          path: 'categories',
+          name: 'categories',
+          component: CategoriesView,
+        },
+        {
+          path: 'tags',
+          name: 'tags',
+          component: TagsView,
+        },
+      ],
     },
   ],
 })

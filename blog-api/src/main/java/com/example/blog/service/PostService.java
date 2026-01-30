@@ -59,6 +59,18 @@ public class PostService {
             wrapper.eq(Post::getCategoryId, q.getCategoryId());
         }
 
+        // tagId filtering: join via post_tag first
+        if (q.getTagId() != null) {
+            List<PostTag> pts = postTagMapper.selectList(
+                    Wrappers.<PostTag>lambdaQuery().eq(PostTag::getTagId, q.getTagId())
+            );
+            if (pts.isEmpty()) {
+                return new PageResult<>(Collections.emptyList(), 0, pageNum, pageSize);
+            }
+            List<Long> postIds = pts.stream().map(PostTag::getPostId).distinct().collect(Collectors.toList());
+            wrapper.in(Post::getId, postIds);
+        }
+
         Page<Post> page = postMapper.selectPage(new Page<>(pageNum, pageSize), wrapper);
         List<Post> posts = page.getRecords();
 

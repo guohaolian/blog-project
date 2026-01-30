@@ -33,7 +33,7 @@
 
       <el-form-item>
         <el-button type="primary" :loading="loading" @click="save">Save</el-button>
-        <el-button @click="$router.push('/posts')">Back</el-button>
+        <el-button @click="$router.push('/admin/posts')">Back</el-button>
         <el-button v-if="!isNew && form.status !== 'PUBLISHED'" type="success" @click="publish">Publish</el-button>
         <el-button v-if="!isNew && form.status === 'PUBLISHED'" type="warning" @click="unpublish">Unpublish</el-button>
       </el-form-item>
@@ -118,7 +118,7 @@ async function save() {
         tagIds: form.tagIds,
       })
       ElMessage.success('Saved')
-      router.replace(`/posts/${newId}/edit`)
+      router.replace(`/admin/posts/${newId}/edit`)
     } else {
       await adminPostUpdate(id.value, {
         title: form.title,

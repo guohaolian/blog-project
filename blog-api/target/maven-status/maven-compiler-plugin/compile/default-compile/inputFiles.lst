@@ -13,6 +13,7 @@ E:\blog-project\blog-api\src\main\java\com\example\blog\vo\admin\AdminPostEditVO
 E:\blog-project\blog-api\src\main\java\com\example\blog\common\TimeUtil.java
 E:\blog-project\blog-api\src\main\java\com\example\blog\common\BizException.java
 E:\blog-project\blog-api\src\main\java\com\example\blog\service\PostService.java
+E:\blog-project\blog-api\src\main\java\com\example\blog\controller\admin\AdminDashboardController.java
 E:\blog-project\blog-api\src\main\java\com\example\blog\vo\admin\AdminMeResponse.java
 E:\blog-project\blog-api\src\main\java\com\example\blog\dto\admin\AdminPostQuery.java
 E:\blog-project\blog-api\src\main\java\com\example\blog\dto\PostQuery.java
@@ -24,7 +25,9 @@ E:\blog-project\blog-api\src\main\java\com\example\blog\security\AdminPrincipal.
 E:\blog-project\blog-api\src\main\java\com\example\blog\mapper\PostMapper.java
 E:\blog-project\blog-api\src\main\java\com\example\blog\security\JwtTokenService.java
 E:\blog-project\blog-api\src\main\java\com\example\blog\service\AdminAuthService.java
+E:\blog-project\blog-api\src\main\java\com\example\blog\service\AdminDashboardService.java
 E:\blog-project\blog-api\src\main\java\com\example\blog\mapper\PostTagMapper.java
+E:\blog-project\blog-api\src\main\java\com\example\blog\vo\admin\AdminDashboardStatsVO.java
 E:\blog-project\blog-api\src\main\java\com\example\blog\config\JwtConfig.java
 E:\blog-project\blog-api\src\main\java\com\example\blog\vo\TagVO.java
 E:\blog-project\blog-api\src\main\java\com\example\blog\config\SecurityConfig.java
