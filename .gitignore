@@ -1,0 +1,23 @@
+# General
+.DS_Store
+Thumbs.db
+
+# JetBrains
+.idea/
+*.iml
+
+# Node
+node_modules/
+dist/
+.env.local
+.env.*.local
+npm-debug.log*
+
+# Java
+/target/
+*.log
+
+# OS / Temp
+*.tmp
+*.temp
+*.swp

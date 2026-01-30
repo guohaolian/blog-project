@@ -1,0 +1,19 @@
+# /etc/systemd/system/blog-api.service
+
+[Unit]
+Description=blog-api (Spring Boot)
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/blog/blog-api
+ExecStart=/usr/bin/java -jar /opt/blog/blog-api/blog-api.jar --spring.profiles.active=prod
+Restart=always
+RestartSec=5
+
+# logs
+StandardOutput=append:/var/log/blog/blog-api.out.log
+StandardError=append:/var/log/blog/blog-api.err.log
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,7 @@
+-- Create a dedicated DB user for local development
+-- NOTE: MySQL 5.5 compatible
+
+-- Adjust password as needed
+CREATE USER 'blog'@'localhost' IDENTIFIED BY 'blog123';
+GRANT ALL PRIVILEGES ON blog_db.* TO 'blog'@'localhost';
+FLUSH PRIVILEGES;

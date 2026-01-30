@@ -1,0 +1,13 @@
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/blog_db?useUnicode=true&characterEncoding=utf8&useSSL=false
+    username: root
+    password: ghl200224
+    driver-class-name: com.mysql.jdbc.Driver
+
+app:
+  jwt:
+    secret: change-me-in-dev
+    expire-seconds: 86400
+  upload:
+    dir: ./uploads

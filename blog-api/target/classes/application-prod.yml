@@ -1,0 +1,13 @@
+spring:
+  datasource:
+    url: jdbc:mysql://127.0.0.1:3306/blog_db?useUnicode=true&characterEncoding=utf8&useSSL=false
+    username: root
+    password: root
+    driver-class-name: com.mysql.jdbc.Driver
+
+app:
+  jwt:
+    secret: change-me-in-prod
+    expire-seconds: 86400
+  upload:
+    dir: /opt/blog/uploads
