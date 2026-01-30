@@ -6,6 +6,7 @@ const CategoriesView = () => import('../views/CategoriesView.vue')
 const CategoryPostsView = () => import('../views/CategoryPostsView.vue')
 const TagsView = () => import('../views/TagsView.vue')
 const TagPostsView = () => import('../views/TagPostsView.vue')
+const NotFoundView = () => import('../views/NotFoundView.vue')
 
 export const router = createRouter({
   history: createWebHistory(),
@@ -39,6 +40,11 @@ export const router = createRouter({
       path: '/tag/:id',
       name: 'tag-posts',
       component: TagPostsView,
+    },
+    {
+      path: '/:pathMatch(.*)*',
+      name: 'not-found',
+      component: NotFoundView,
     },
   ],
 })
