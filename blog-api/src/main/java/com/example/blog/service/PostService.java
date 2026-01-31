@@ -17,7 +17,10 @@ import com.example.blog.mapper.CategoryMapper;
 import com.example.blog.mapper.PostMapper;
 import com.example.blog.mapper.PostTagMapper;
 import com.example.blog.mapper.TagMapper;
+import com.example.blog.vo.ArchiveMonthGroupVO;
+import com.example.blog.vo.ArchivePostVO;
 import com.example.blog.vo.CategoryVO;
+import com.example.blog.vo.HotPostVO;
 import com.example.blog.vo.PostDetailVO;
 import com.example.blog.vo.PostListItemVO;
 import com.example.blog.vo.TagVO;
@@ -39,6 +42,70 @@ public class PostService {
         this.categoryMapper = categoryMapper;
         this.tagMapper = tagMapper;
         this.postTagMapper = postTagMapper;
+    }
+
+    public List<ArchiveMonthGroupVO> archives() {
+        // load all published posts (simple implementation for v1.0)
+        List<Post> posts = postMapper.selectList(
+                Wrappers.<Post>lambdaQuery()
+                        .eq(Post::getIsDeleted, 0)
+                        .eq(Post::getStatus, "PUBLISHED")
+                        .isNotNull(Post::getPublishedAt)
+                        .orderByDesc(Post::getPublishedAt)
+        );
+
+        // group by yyyy-MM
+        Map<String, List<Post>> groups = new LinkedHashMap<>();
+        for (Post p : posts) {
+            String month = TimeUtil.format(p.getPublishedAt());
+            // defensive: format returns full timestamp, we only need yyyy-MM
+            if (month != null && month.length() >= 7) {
+                month = month.substring(0, 7);
+            } else {
+                month = "unknown";
+            }
+            groups.computeIfAbsent(month, k -> new ArrayList<>()).add(p);
+        }
+
+        List<ArchiveMonthGroupVO> res = new ArrayList<>();
+        for (Map.Entry<String, List<Post>> e : groups.entrySet()) {
+            ArchiveMonthGroupVO g = new ArchiveMonthGroupVO();
+            g.setMonth(e.getKey());
+            g.setCount(e.getValue().size());
+            List<ArchivePostVO> ps = e.getValue().stream().map(p -> {
+                ArchivePostVO vo = new ArchivePostVO();
+                vo.setId(p.getId());
+                vo.setTitle(p.getTitle());
+                vo.setPublishedAt(TimeUtil.format(p.getPublishedAt()));
+                return vo;
+            }).collect(Collectors.toList());
+            g.setPosts(ps);
+            res.add(g);
+        }
+        return res;
+    }
+
+    public List<HotPostVO> hot(Integer limit) {
+        int n = limit == null ? 10 : limit;
+        if (n < 1) n = 1;
+        if (n > 50) n = 50;
+
+        Page<Post> page = postMapper.selectPage(new Page<>(1, n),
+                Wrappers.<Post>lambdaQuery()
+                        .eq(Post::getIsDeleted, 0)
+                        .eq(Post::getStatus, "PUBLISHED")
+                        .orderByDesc(Post::getViewCount)
+                        .orderByDesc(Post::getPublishedAt)
+        );
+
+        return page.getRecords().stream().map(p -> {
+            HotPostVO vo = new HotPostVO();
+            vo.setId(p.getId());
+            vo.setTitle(p.getTitle());
+            vo.setViewCount(p.getViewCount() == null ? 0L : p.getViewCount());
+            vo.setPublishedAt(TimeUtil.format(p.getPublishedAt()));
+            return vo;
+        }).collect(Collectors.toList());
     }
 
     public PageResult<PostListItemVO> listPublished(PostQuery q) {

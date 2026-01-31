@@ -40,6 +40,13 @@ export interface PostDetailVO {
   viewCount?: number
 }
 
+export interface HotPostVO {
+  id: number
+  title: string
+  viewCount?: number
+  publishedAt?: string
+}
+
 export function getPosts(params: {
   pageNum: number
   pageSize: number
@@ -52,4 +59,8 @@ export function getPosts(params: {
 
 export function getPostDetail(id: number) {
   return request.get<unknown, PostDetailVO>(`/posts/${id}`)
+}
+
+export function getHotPosts(params?: { limit?: number }) {
+  return request.get<unknown, HotPostVO[]>('/posts/hot', { params })
 }

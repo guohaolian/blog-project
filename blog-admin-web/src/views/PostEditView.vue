@@ -12,7 +12,17 @@
       </el-form-item>
 
       <el-form-item label="Cover URL">
-        <el-input v-model="form.coverUrl" placeholder="/uploads/... or https://..." />
+        <div style="display: flex; gap: 8px; width: 100%">
+          <el-input v-model="form.coverUrl" placeholder="/uploads/... or https://..." />
+
+          <el-upload
+            :show-file-list="false"
+            accept="image/*"
+            :before-upload="onCoverBeforeUpload"
+          >
+            <el-button :loading="coverUploading">Upload</el-button>
+          </el-upload>
+        </div>
       </el-form-item>
 
       <el-form-item label="Category">
@@ -28,7 +38,19 @@
       </el-form-item>
 
       <el-form-item label="Content" prop="content">
-        <el-input v-model="form.content" type="textarea" :rows="16" placeholder="# Markdown..." />
+        <div style="width: 100%">
+          <div style="display: flex; justify-content: flex-end; margin-bottom: 8px">
+            <el-upload
+              :show-file-list="false"
+              accept="image/*"
+              :before-upload="onBodyBeforeUpload"
+            >
+              <el-button size="small" :loading="bodyUploading">Upload image (markdown)</el-button>
+            </el-upload>
+          </div>
+
+          <el-input v-model="form.content" type="textarea" :rows="16" placeholder="# Markdown..." />
+        </div>
       </el-form-item>
 
       <el-form-item>
@@ -55,6 +77,7 @@ import {
   adminPostUpdate,
   adminTags,
 } from '../api/posts'
+import { adminUploadImage } from '../api/upload'
 import type { CategoryVO, TagVO } from '../api/posts'
 
 const route = useRoute()
@@ -65,6 +88,9 @@ const isNew = computed(() => route.path.endsWith('/new'))
 
 const formRef = ref<FormInstance>()
 const loading = ref(false)
+
+const coverUploading = ref(false)
+const bodyUploading = ref(false)
 
 const categories = ref<CategoryVO[]>([])
 const tags = ref<TagVO[]>([])
@@ -145,6 +171,37 @@ async function unpublish() {
   await adminPostUnpublish(id.value)
   form.status = 'DRAFT'
   ElMessage.success('Unpublished')
+}
+
+async function uploadImage(file: File) {
+  const res = await adminUploadImage(file)
+  return res.url
+}
+
+async function onCoverBeforeUpload(file: File) {
+  coverUploading.value = true
+  try {
+    const url = await uploadImage(file)
+    form.coverUrl = url
+    ElMessage.success('Cover uploaded')
+  } finally {
+    coverUploading.value = false
+  }
+  return false
+}
+
+async function onBodyBeforeUpload(file: File) {
+  bodyUploading.value = true
+  try {
+    const url = await uploadImage(file)
+    // keep it simple: append markdown image at end
+    const md = `\n\n![](${url})\n`
+    form.content = (form.content || '') + md
+    ElMessage.success('Image uploaded')
+  } finally {
+    bodyUploading.value = false
+  }
+  return false
 }
 
 onMounted(async () => {

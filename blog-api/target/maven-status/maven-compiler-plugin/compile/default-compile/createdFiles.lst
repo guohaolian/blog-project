@@ -1,6 +1,7 @@
 com\example\blog\controller\admin\AdminPostController.class
 com\example\blog\vo\SiteSettingVO.class
 com\example\blog\entity\Tag.class
+com\example\blog\security\RestAccessDeniedHandler.class
 com\example\blog\entity\PostTag.class
 com\example\blog\vo\admin\AdminDashboardStatsVO.class
 com\example\blog\vo\PostDetailVO.class
@@ -14,11 +15,13 @@ com\example\blog\service\SiteSettingService.class
 com\example\blog\dto\admin\AdminPostUpdateRequest.class
 com\example\blog\security\JwtTokenService.class
 com\example\blog\controller\CommentController.class
+com\example\blog\security\RestAuthEntryPoint.class
 com\example\blog\mapper\CategoryMapper.class
 com\example\blog\service\AdminPostService.class
 com\example\blog\entity\Comment.class
 com\example\blog\vo\admin\AdminCommentVO.class
 com\example\blog\mapper\PostTagMapper.class
+com\example\blog\vo\ArchiveMonthGroupVO.class
 com\example\blog\common\ApiResponse.class
 com\example\blog\mapper\SiteSettingMapper.class
 com\example\blog\config\SecurityConfig.class
@@ -33,6 +36,7 @@ com\example\blog\controller\admin\AdminAuthController.class
 com\example\blog\security\JwtAuthFilter.class
 com\example\blog\common\ErrorCodes.class
 com\example\blog\security\AdminPrincipal.class
+com\example\blog\config\MybatisPlusConfig.class
 com\example\blog\entity\AdminUser.class
 com\example\blog\tools\PasswordHashTool.class
 com\example\blog\vo\CategoryVO.class
@@ -43,6 +47,7 @@ com\example\blog\config\JwtConfig.class
 com\example\blog\controller\admin\AdminTagController.class
 com\example\blog\entity\Category.class
 com\example\blog\dto\admin\SiteSettingRequest.class
+com\example\blog\vo\HotPostVO.class
 com\example\blog\vo\PostListItemVO.class
 com\example\blog\mapper\PostMapper.class
 com\example\blog\controller\HealthController.class
@@ -52,9 +57,11 @@ com\example\blog\service\AdminCommentService.class
 com\example\blog\controller\admin\AdminCategoryController.class
 com\example\blog\controller\PostController.class
 com\example\blog\service\PostService.class
+com\example\blog\vo\ArchivePostVO.class
 com\example\blog\dto\admin\AdminPostQuery.class
 com\example\blog\common\BizException.class
 com\example\blog\common\TimeUtil.class
+com\example\blog\config\UploadsWebConfig.class
 com\example\blog\dto\CommentCreateRequest.class
 com\example\blog\vo\admin\AdminPostEditVO.class
 com\example\blog\entity\Post.class
@@ -63,8 +70,11 @@ com\example\blog\dto\PostQuery.class
 com\example\blog\mapper\TagMapper.class
 com\example\blog\vo\admin\AdminMeResponse.class
 com\example\blog\controller\admin\AdminDashboardController.class
+com\example\blog\controller\admin\AdminUploadController.class
+com\example\blog\service\UploadService.class
 com\example\blog\BlogApiApplication.class
 com\example\blog\service\AdminAuthService.class
 com\example\blog\dto\admin\AdminLoginRequest.class
 com\example\blog\controller\admin\AdminCommentController.class
+com\example\blog\vo\UploadResultVO.class
 com\example\blog\controller\TagController.class

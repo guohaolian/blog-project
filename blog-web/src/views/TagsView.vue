@@ -1,5 +1,5 @@
 <template>
-  <div style="padding: 16px; max-width: 900px; margin: 0 auto">
+  <div class="container" style="padding: 16px 0">
     <h2 style="margin: 0 0 12px">Tags</h2>
 
     <el-card v-loading="loading">
