@@ -18,8 +18,19 @@ public class GlobalExceptionHandler {
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     @ExceptionHandler(BizException.class)
+    @ResponseStatus
     public ApiResponse<Void> handleBiz(BizException e) {
         return ApiResponse.fail(e.getCode(), e.getMessage());
+    }
+
+    @ResponseStatus
+    public HttpStatus handleBizStatus(BizException e) {
+        // Map our business error codes to proper HTTP status codes.
+        if (e.getCode() == ErrorCodes.UNAUTHORIZED) return HttpStatus.UNAUTHORIZED;
+        if (e.getCode() == ErrorCodes.FORBIDDEN) return HttpStatus.FORBIDDEN;
+        if (e.getCode() == ErrorCodes.NOT_FOUND) return HttpStatus.NOT_FOUND;
+        // BAD_REQUEST and all other business validation errors
+        return HttpStatus.BAD_REQUEST;
     }
 
     @ResponseStatus(HttpStatus.BAD_REQUEST)

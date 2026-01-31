@@ -11,6 +11,44 @@
             <el-button text @click="$router.push('/tags')">Tags</el-button>
             <el-button text @click="$router.push('/about')">About</el-button>
             <el-button text @click="$router.push('/links')">Links</el-button>
+
+            <div style="width: 12px" />
+            <el-tooltip content="Theme" placement="bottom">
+              <div style="display:flex;align-items:center;gap:8px">
+                <el-segmented
+                  v-model="theme.mode"
+                  :options="themeOptions"
+                  size="small"
+                  @change="(v: any) => theme.setMode(v)"
+                />
+
+                <div v-if="theme.mode === 'auto'" style="display:flex;align-items:center;gap:6px">
+                  <el-tooltip content="Dark window start (HH:mm)" placement="bottom">
+                    <el-input
+                      v-model="autoStart"
+                      size="small"
+                      style="width: 70px"
+                      placeholder="19:00"
+                      maxlength="5"
+                      @blur="applyAutoWindow"
+                      @keyup.enter="applyAutoWindow"
+                    />
+                  </el-tooltip>
+                  <span style="opacity: 0.7">~</span>
+                  <el-tooltip content="Dark window end (HH:mm)" placement="bottom">
+                    <el-input
+                      v-model="autoEnd"
+                      size="small"
+                      style="width: 70px"
+                      placeholder="07:00"
+                      maxlength="5"
+                      @blur="applyAutoWindow"
+                      @keyup.enter="applyAutoWindow"
+                    />
+                  </el-tooltip>
+                </div>
+              </div>
+            </el-tooltip>
           </div>
         </div>
       </div>
@@ -39,9 +77,34 @@ import { computed, onMounted, onBeforeUnmount, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import BackToTopFab from './components/BackToTopFab.vue'
 import { useSiteStore } from './stores/site'
+import { useThemeStore } from './stores/theme'
+import { Moon, Sunny, Monitor } from '@element-plus/icons-vue'
+import { ElMessage } from 'element-plus'
 
 const site = useSiteStore()
+const theme = useThemeStore()
 const route = useRoute()
+
+const themeOptions = [
+  { label: 'Light', value: 'light', showsIcon: true, icon: Sunny },
+  { label: 'Auto', value: 'auto', showsIcon: true, icon: Monitor },
+  { label: 'Dark', value: 'dark', showsIcon: true, icon: Moon },
+]
+
+const autoStart = ref(theme.autoWindow.start)
+const autoEnd = ref(theme.autoWindow.end)
+
+function applyAutoWindow() {
+  const start = (autoStart.value || '').trim()
+  const end = (autoEnd.value || '').trim()
+  if (!/^\d{2}:\d{2}$/.test(start) || !/^\d{2}:\d{2}$/.test(end)) {
+    ElMessage.warning('Time format should be HH:mm (e.g. 19:00)')
+    autoStart.value = theme.autoWindow.start
+    autoEnd.value = theme.autoWindow.end
+    return
+  }
+  theme.setAutoWindow({ start, end })
+}
 
 const backToTopTarget = computed(() => {
   // PostDetailView uses an inner scroll container

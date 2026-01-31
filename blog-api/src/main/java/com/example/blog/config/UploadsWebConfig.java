@@ -33,8 +33,8 @@ public class UploadsWebConfig implements WebMvcConfigurer {
 
         registry.addResourceHandler("/uploads/**")
                 .addResourceLocations(location)
-                // keep it simple; browser will revalidate as needed
-                .setCachePeriod(3600)
-                .resourceChain(false);
+                // Disable strong cache: allow browser to revalidate (or see 404) quickly after deletion.
+                .setCachePeriod(0)
+                .resourceChain(true);
     }
 }

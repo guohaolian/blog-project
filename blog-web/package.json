@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@element-plus/theme-chalk": "^2.2.16",
     "axios": "^1.13.4",
     "element-plus": "^2.13.1",
     "highlight.js": "^11.11.1",

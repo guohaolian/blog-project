@@ -68,6 +68,7 @@ import { computed, onMounted, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import type { FormInstance, FormRules } from 'element-plus'
 import { ElMessage } from 'element-plus'
+import axios from 'axios'
 import {
   adminCategories,
   adminPostCreate,
@@ -178,12 +179,36 @@ async function uploadImage(file: File) {
   return res.url
 }
 
+function humanFileSize(bytes: number) {
+  if (!Number.isFinite(bytes) || bytes <= 0) return '0B'
+  if (bytes < 1024) return `${bytes}B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)}KB`
+  return `${(bytes / 1024 / 1024).toFixed(2)}MB`
+}
+
+function extractErrMsg(e: unknown) {
+  if (axios.isAxiosError(e)) {
+    const data: any = e.response?.data
+    if (data?.message) return String(data.message)
+    if (e.response?.status) return `HTTP ${e.response.status}`
+    return e.message || 'Upload failed'
+  }
+  return (e as any)?.message || String(e)
+}
+
 async function onCoverBeforeUpload(file: File) {
   coverUploading.value = true
   try {
-    const url = await uploadImage(file)
-    form.coverUrl = url
+    // precheck (avoid uploading huge files)
+    if (file.size > 10 * 1024 * 1024) {
+      ElMessage.error(`File too large: ${humanFileSize(file.size)} (max 10MB)`)
+      return false
+    }
+    form.coverUrl = await uploadImage(file)
     ElMessage.success('Cover uploaded')
+  } catch (e) {
+    console.error('cover upload failed', e)
+    ElMessage.error(extractErrMsg(e))
   } finally {
     coverUploading.value = false
   }
@@ -193,11 +218,17 @@ async function onCoverBeforeUpload(file: File) {
 async function onBodyBeforeUpload(file: File) {
   bodyUploading.value = true
   try {
-    const url = await uploadImage(file)
+    if (file.size > 10 * 1024 * 1024) {
+      ElMessage.error(`File too large: ${humanFileSize(file.size)} (max 10MB)`)
+      return false
+    }
     // keep it simple: append markdown image at end
-    const md = `\n\n![](${url})\n`
+    const md = `\n\n![](${await uploadImage(file)})\n`
     form.content = (form.content || '') + md
     ElMessage.success('Image uploaded')
+  } catch (e) {
+    console.error('body image upload failed', e)
+    ElMessage.error(extractErrMsg(e))
   } finally {
     bodyUploading.value = false
   }

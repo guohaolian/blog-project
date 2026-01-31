@@ -55,6 +55,14 @@
                 style="width: 100%; max-height: 360px; object-fit: cover; border-radius: 6px; margin-bottom: 12px"
               />
 
+              <el-alert
+                v-if="mdImageBrokenCount > 0"
+                type="warning"
+                :title="`${mdImageBrokenCount} image(s) failed to load (maybe deleted).`"
+                show-icon
+                style="margin-bottom: 12px"
+              />
+
               <div class="md" v-html="rendered" />
             </el-card>
 
@@ -139,7 +147,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, reactive, ref, watch } from 'vue'
+import { nextTick, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { getPostDetail, getPosts, type PostDetailVO, type PostListItemVO } from '../api/posts'
@@ -158,6 +166,7 @@ const post = ref<PostDetailVO | null>(null)
 
 const toc = ref<TocItem[]>([])
 const rendered = ref('')
+const mdImageBrokenCount = ref(0)
 const activeHeadingId = ref('')
 
 const related = ref<PostListItemVO[]>([])
@@ -179,11 +188,33 @@ function rebuildMarkdown() {
   if (!post.value) {
     rendered.value = ''
     toc.value = []
+    mdImageBrokenCount.value = 0
     return
   }
   const { html, toc: t } = renderMarkdownWithToc(post.value.content || '')
   rendered.value = html
   toc.value = t
+}
+
+function bindMarkdownImageFallback() {
+  mdImageBrokenCount.value = 0
+  const container = document.querySelector('.post-detail .md') as HTMLElement | null
+  if (!container) return
+
+  const imgs = Array.from(container.querySelectorAll('img')) as HTMLImageElement[]
+  for (const img of imgs) {
+    // avoid double binding
+    if ((img as any).__boundImgErr) continue
+    ;(img as any).__boundImgErr = true
+
+    img.addEventListener('error', () => {
+      // hide broken image to avoid ugly broken icon
+      if (img.style.display !== 'none') {
+        img.style.display = 'none'
+        mdImageBrokenCount.value += 1
+      }
+    })
+  }
 }
 
 function scrollToHeading(id: string) {
@@ -320,6 +351,8 @@ watch(
   () => rendered.value,
   () => {
     setTimeout(() => setupTocObserver(), 0)
+    // bind after DOM updated
+    nextTick(() => bindMarkdownImageFallback())
   },
 )
 

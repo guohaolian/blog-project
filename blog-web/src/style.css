@@ -14,6 +14,22 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Dark mode: Element Plus dark variables are enabled when <html> has class `dark` */
+html.dark {
+  color-scheme: dark;
+}
+
+/* Ensure body background follows Element Plus theme variables */
+body {
+  background: var(--el-bg-color, #f5f6f7);
+  color: var(--el-text-color-primary, #213547);
+}
+
+/* Link colors should follow current theme */
+a {
+  color: var(--el-color-primary);
+}
+
 /* =============================
    CSS RESET / NORMALIZE (lite)
    ============================= */

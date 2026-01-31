@@ -21,3 +21,5 @@
 - MySQL 初始化 SQL：`../deploy/sql/init.sql`
 - Nginx 配置模板：`../deploy/nginx/blog.conf.example`
 - systemd 服务模板：`../deploy/systemd/blog-api.service.example`
+
+- OpenAPI (implemented, source of truth): `openapi-implemented.md`

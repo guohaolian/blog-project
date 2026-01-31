@@ -23,20 +23,26 @@ import java.util.UUID;
 @Service
 public class UploadService {
 
-    private static final long MAX_SIZE_BYTES = 5L * 1024 * 1024; // 5MB
+    private static final long MAX_SIZE_BYTES = 10L * 1024 * 1024; // 10MB
     private static final Set<String> ALLOWED_CONTENT_TYPES = Set.of(
             "image/jpeg",
+            "image/jpg",
             "image/png",
             "image/gif",
             "image/webp"
     );
 
+    private static final Set<String> ALLOWED_EXTS = Set.of("jpg", "png", "gif", "webp");
+
     private static final DateTimeFormatter YM = DateTimeFormatter.ofPattern("yyyyMM");
 
     private final String uploadDir;
+    private final AdminResourceService adminResourceService;
 
-    public UploadService(@Value("${app.upload.dir:./uploads}") String uploadDir) {
+    public UploadService(@Value("${app.upload.dir:./uploads}") String uploadDir,
+                         AdminResourceService adminResourceService) {
         this.uploadDir = uploadDir;
+        this.adminResourceService = adminResourceService;
     }
 
     public UploadResultVO uploadImage(MultipartFile file) {
@@ -44,12 +50,24 @@ public class UploadService {
             throw new BizException(ErrorCodes.BAD_REQUEST, "file is empty");
         }
         if (file.getSize() > MAX_SIZE_BYTES) {
-            throw new BizException(ErrorCodes.BAD_REQUEST, "file too large (max 5MB)");
+            throw new BizException(ErrorCodes.BAD_REQUEST, "file too large (max 10MB)");
         }
 
         String contentType = file.getContentType();
+        String extFromName = null;
+        if (StringUtils.hasText(file.getOriginalFilename())) {
+            extFromName = StringUtils.getFilenameExtension(file.getOriginalFilename());
+            if (extFromName != null) {
+                extFromName = extFromName.toLowerCase(Locale.ROOT);
+                if (extFromName.equals("jpeg")) extFromName = "jpg";
+            }
+        }
+
+        // Some browsers may send application/octet-stream; allow known image extensions as a fallback.
         if (!StringUtils.hasText(contentType) || !ALLOWED_CONTENT_TYPES.contains(contentType)) {
-            throw new BizException(ErrorCodes.BAD_REQUEST, "unsupported content-type");
+            if (extFromName == null || !ALLOWED_EXTS.contains(extFromName)) {
+                throw new BizException(ErrorCodes.BAD_REQUEST, "unsupported content-type");
+            }
         }
 
         String ext = guessExt(file.getOriginalFilename(), contentType);
@@ -77,6 +95,10 @@ public class UploadService {
         vo.setOriginalName(file.getOriginalFilename());
         vo.setSize(file.getSize());
         vo.setContentType(contentType);
+
+        // record resource for admin list (best-effort)
+        adminResourceService.recordUpload(vo);
+
         return vo;
     }
 
@@ -101,7 +123,7 @@ public class UploadService {
         // normalize jpeg
         if (ext.equals("jpeg")) ext = "jpg";
         // only allow a small set
-        if (!Set.of("jpg", "png", "gif", "webp").contains(ext)) {
+        if (!ALLOWED_EXTS.contains(ext)) {
             ext = "jpg";
         }
         return ext;

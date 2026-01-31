@@ -542,3 +542,74 @@ Query：`pageNum`、`pageSize`
 ```json
 {"updated": true}
 ```
+
+---
+
+## 12. 管理员管理（Admin）
+
+> 简化版：v1.0 只做 ADMIN（单一角色），支持列表/新增/重置密码/启用禁用。
+
+### 12.1 GET /api/admin/admins
+
+说明：管理员数量通常很少，可先返回全量列表（不分页）。
+
+**Response.data**：AdminUserVO[]
+
+### 12.2 POST /api/admin/admins
+
+**Request**：AdminUserCreateRequest
+- `username` (string, required, 3~50)
+- `password` (string, required, 6~100)
+- `displayName` (string, optional, <=50)
+
+**Response.data**
+```json
+{"id": 1}
+```
+
+可能错误：
+- 40001 参数校验失败
+- 40001 username 已存在（message 说明即可）
+
+### 12.3 PUT /api/admin/admins/{id}/reset-password
+
+**Request**：AdminUserResetPasswordRequest
+- `newPassword` (string, required, 6~100)
+
+**Response.data**
+```json
+{"reset": true}
+```
+
+### 12.4 PUT /api/admin/admins/{id}/status
+
+**Request**：AdminUserStatusRequest
+- `status` (number, required) 1=启用, 0=禁用
+
+**Response.data**
+```json
+{"updated": true}
+```
+
+---
+
+### Models
+
+#### AdminUserVO
+- `id` (number)
+- `username` (string)
+- `displayName` (string|null)
+- `status` (number) 1=启用, 0=禁用
+- `createdAt` (string, datetime)
+- `updatedAt` (string, datetime)
+
+#### AdminUserCreateRequest
+- `username` (string)
+- `password` (string)
+- `displayName` (string|null)
+
+#### AdminUserResetPasswordRequest
+- `newPassword` (string)
+
+#### AdminUserStatusRequest
+- `status` (number)

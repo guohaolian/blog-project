@@ -10,6 +10,8 @@ const CategoriesView = () => import('../views/CategoriesView.vue')
 const TagsView = () => import('../views/TagsView.vue')
 const CommentsView = () => import('../views/CommentsView.vue')
 const SettingsView = () => import('../views/SettingsView.vue')
+const ResourcesView = () => import('../views/ResourcesView.vue')
+const AdminsView = () => import('../views/AdminsView.vue')
 
 export const router = createRouter({
   history: createWebHistory(),
@@ -60,7 +62,9 @@ export const router = createRouter({
           name: 'comments',
           component: CommentsView,
         },
+        { path: 'resources', name: 'resources', component: ResourcesView },
         { path: 'settings', name: 'settings', component: SettingsView },
+        { path: 'admins', name: 'admins', component: AdminsView },
       ],
     },
   ],
