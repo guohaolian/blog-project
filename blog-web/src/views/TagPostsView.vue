@@ -1,8 +1,12 @@
 <template>
-  <div style="padding: 16px; max-width: 900px; margin: 0 auto">
+  <div class="container" style="padding: 16px 0">
     <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px">
       <h2 style="margin: 0">Tag Posts</h2>
       <el-button text @click="$router.push('/tags')">All Tags</el-button>
+    </div>
+
+    <div style="color:#888;font-size:12px;margin:-6px 0 10px">
+      Page {{ pageNum }} / Total {{ total }}
     </div>
 
     <el-card v-for="p in list" :key="p.id" style="margin-bottom: 12px" v-loading="loading">
@@ -22,18 +26,20 @@
     <div style="margin-top: 12px; display: flex; justify-content: flex-end">
       <el-pagination
         background
-        layout="prev, pager, next"
+        layout="total, sizes, prev, pager, next"
         :current-page="pageNum"
         :page-size="pageSize"
+        :page-sizes="[5, 10, 20, 50]"
         :total="total"
-        @current-change="(p:number) => { pageNum = p; fetchList() }"
+        @current-change="onPageChange"
+        @size-change="onPageSizeChange"
       />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { getPosts, type PostListItemVO } from '../api/posts'
 
@@ -59,4 +65,23 @@ async function fetchList() {
 }
 
 onMounted(fetchList)
+
+watch(
+  () => route.params.id,
+  () => {
+    pageNum.value = 1
+    fetchList()
+  },
+)
+
+function onPageChange(p: number) {
+  pageNum.value = p
+  fetchList()
+}
+
+function onPageSizeChange(ps: number) {
+  pageSize.value = ps
+  pageNum.value = 1
+  fetchList()
+}
 </script>

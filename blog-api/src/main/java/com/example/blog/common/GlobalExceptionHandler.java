@@ -9,6 +9,8 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.AuthenticationException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -33,6 +35,18 @@ public class GlobalExceptionHandler {
             msg = "bad request";
         }
         return ApiResponse.fail(ErrorCodes.BAD_REQUEST, msg);
+    }
+
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    @ExceptionHandler(AuthenticationException.class)
+    public ApiResponse<Void> handleAuth(AuthenticationException e) {
+        return ApiResponse.fail(ErrorCodes.UNAUTHORIZED, "unauthorized");
+    }
+
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    @ExceptionHandler(AccessDeniedException.class)
+    public ApiResponse<Void> handleDenied(AccessDeniedException e) {
+        return ApiResponse.fail(ErrorCodes.FORBIDDEN, "forbidden");
     }
 
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)

@@ -3,9 +3,10 @@
   line-height: 1.5;
   font-weight: 400;
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+  /* Let Element Plus / app decide colors; keep a neutral base */
+  color-scheme: light;
+  color: #213547;
+  background-color: #f5f6f7;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -13,67 +14,108 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
+/* =============================
+   CSS RESET / NORMALIZE (lite)
+   ============================= */
+
+/* Use a more intuitive box model */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }
-a:hover {
-  color: #535bf2;
+
+/* Remove default spacing */
+* {
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  height: 100%;
 }
 
 body {
-  margin: 0;
-  display: flex;
-  place-items: center;
   min-width: 320px;
   min-height: 100vh;
+  font-family: inherit;
+  line-height: inherit;
+  color: inherit;
+  background: var(--el-bg-color, #f5f6f7);
+  text-rendering: optimizeLegibility;
 }
 
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
+/* Media elements */
+img,
+picture,
+video,
+canvas,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+/* Form elements */
+input,
+button,
+textarea,
+select {
+  font: inherit;
+  color: inherit;
 }
 
 button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
+  background: none;
+  border: none;
   cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
 }
 
-.card {
-  padding: 2em;
+/* Lists */
+ul,
+ol {
+  list-style: none;
 }
 
-#app {
-  max-width: 1280px;
+/* Links */
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* Headings */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-weight: inherit;
+}
+
+/* Tables */
+table {
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+/* Prevent iOS text size adjust */
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+/* Shared layout container (aligns header + pages) */
+.container {
+  max-width: 1200px;
   margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+  padding: 0 16px;
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
+/* App link style (after reset) */
+a {
+  color: var(--el-color-primary);
+}
+
+a:hover {
+  text-decoration: underline;
 }

@@ -9,6 +9,8 @@ const TagPostsView = () => import('../views/TagPostsView.vue')
 const AboutView = () => import('../views/AboutView.vue')
 const LinksView = () => import('../views/LinksView.vue')
 const NotFoundView = () => import('../views/NotFoundView.vue')
+const SearchView = () => import('../views/SearchView.vue')
+const ArchivesView = () => import('../views/ArchivesView.vue')
 
 export const router = createRouter({
   history: createWebHistory(),
@@ -60,6 +62,18 @@ export const router = createRouter({
       name: 'links',
       component: LinksView,
       meta: { title: 'Links' },
+    },
+    {
+      path: '/search',
+      name: 'search',
+      component: SearchView,
+      meta: { title: 'Search' },
+    },
+    {
+      path: '/archives',
+      name: 'archives',
+      component: ArchivesView,
+      meta: { title: 'Archives' },
     },
     {
       path: '/:pathMatch(.*)*',
