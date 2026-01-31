@@ -366,11 +366,9 @@ function setupTocObserver() {
 </script>
 
 <style scoped>
-/* default (fallback) value for app topbar height; will be overwritten by App.vue runtime */
-.post-detail {
-  --app-topbar-h: 120px;
+.post-detail{
+  --app-topbar-h:120px;
 }
-
 /* Wide container for post detail page (not limited to global .container 1200px) */
 .post-detail__container {
   max-width: 1500px;
