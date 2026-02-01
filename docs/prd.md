@@ -204,3 +204,61 @@
 - MySQL 5.5 较老：字符集、索引长度、驱动兼容要保守。
 - 评论开启后存在 spam 风险：默认全审核；后续可加验证码/频率限制。
 - 本地磁盘存储简化部署，但要有备份与目录权限管理。
+
+---
+
+## 9. 需求 - 实现状态对照表（以当前代码为准）
+
+> 说明：本节不修改 PRD 原始需求口径，仅用于记录当前仓库实现情况，便于验收与后续迭代。
+> Source of truth：接口以 `docs/openapi-implemented.md` 为准。
+
+### 9.1 前台（blog-web）
+
+| 需求点 | 状态 | 备注（实现入口/说明） |
+|---|---|---|
+| 首页文章列表（分页、摘要、封面、时间） | ✅ 已实现 | `HomeView.vue` + 分页组件 |
+| 文章详情（Markdown 渲染、封面、分类/标签） | ✅ 已实现 | Markdown 支持代码高亮/表格/任务列表 |
+| 分类列表/分类筛选列表（分页） | ✅ 已实现 | `CategoriesView` / `CategoryPostsView` |
+| 标签列表/标签筛选列表（分页） | ✅ 已实现 | `TagsView` / `TagPostsView` |
+| 搜索（关键字） | ✅ 已实现 | `SearchView` |
+| 归档页 | ✅ 已实现 | `ArchivesView` |
+| 热门文章（按阅读量） | ✅ 已实现 | 首页侧边栏 Hot posts |
+| 关于/友链（站点设置驱动） | ✅ 已实现 | `AboutView` / `LinksView` |
+| 评论（仅已审核展示 + 匿名提交） | ✅ 已实现 | 详情页 comments |
+| 基础 SEO（title/description） | ✅ 已实现 | 路由标题拼接站点名 |
+| 首页全屏 Banner（可配置） | ✅ 已实现（P1） | `bannerUrl` 来自站点设置；首屏占满 + 向下按钮 |
+
+### 9.2 后台（blog-admin-web）
+
+| 需求点 | 状态 | 备注（实现入口/说明） |
+|---|---|---|
+| 管理员登录/退出 | ✅ 已实现 | `/login` + token + 路由守卫 |
+| 仪表盘统计 | ✅ 已实现 | `/dashboard` |
+| 文章管理（列表/编辑/发布/撤回/删除） | ✅ 已实现 | `/posts` / `/posts/:id/edit` |
+| 分类管理 CRUD | ✅ 已实现 | `/categories` |
+| 标签管理 CRUD | ✅ 已实现 | `/tags` |
+| 评论管理（列表/审核/删除） | ✅ 已实现 | `/comments` |
+| 上传（封面/正文图片） | ✅ 已实现 | 上传接口：`/api/admin/upload/image` |
+| 资源管理（列表/删除） | ✅ 已实现 | `/resources`（file_resource 落库） |
+| 站点设置（站点名、公告、关于、SEO、页脚） | ✅ 已实现 | `/settings` |
+| 站点设置：首页 Banner 上传与配置 | ✅ 已实现（P1） | `/settings` 上传后保存到 `bannerUrl` |
+| 管理员管理（新增/重置密码/状态） | ✅ 已实现 | `/admins` |
+
+### 9.3 后端（blog-api）
+
+| 需求点 | 状态 | 备注 |
+|---|---|---|
+| 认证鉴权（Spring Security + JWT） | ✅ 已实现 | Admin API：`/api/admin/**` |
+| 文章域：CRUD/发布/撤回；前台查询 | ✅ 已实现 | 见 OpenAPI implemented |
+| 分类/标签域：后台 CRUD；前台查询 | ✅ 已实现 | 见 OpenAPI implemented |
+| 评论域：匿名创建；后台审核；前台展示已审核 | ✅ 已实现 | 见 OpenAPI implemented |
+| 上传域：图片上传，本地存储 + URL | ✅ 已实现 | 限制：<=10MB；URL：`/uploads/**` |
+| 站点设置域：前台读/后台改 | ✅ 已实现 | `site_setting` 固定 id=1；含 `bannerUrl` |
+| 阅读量：访问详情累加 | ✅ 已实现 | `GET /api/posts/{id}` 会 viewCount +1 |
+| 统一规范：响应体/错误码/分页/参数校验/全局异常 | ✅ 已实现 | 见 `docs/api-conventions.md` |
+
+### 9.4 可延后项（v1.x）
+
+- 暗色模式自动切换：🟡 可选（按时间自动切换可后续加强）
+- 图片懒加载：🟡 可选
+- RSS：🟡 可选

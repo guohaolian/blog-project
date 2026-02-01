@@ -60,13 +60,13 @@ mvn -v
 ```powershell
 cd .\blog-api
 mvn -q -DskipTests package
-java -jar .\target\blog-api-0.0.1-SNAPSHOT.jar --spring.profiles.active=local
+java -jar .\target\blog-api-0.0.1-SNAPSHOT-exec.jar --spring.profiles.active=local
 ```
 
 如果 8080 端口被占用，可以临时换端口：
 
 ```powershell
-java -jar .\target\blog-api-0.0.1-SNAPSHOT.jar --spring.profiles.active=local --server.port=18080
+java -jar .\target\blog-api-0.0.1-SNAPSHOT-exec.jar --spring.profiles.active=local --server.port=18080
 ```
 
 健康检查（建议用 cmd 的 curl，避免 PowerShell 把 curl 映射成 Invoke-WebRequest）：
@@ -75,10 +75,14 @@ java -jar .\target\blog-api-0.0.1-SNAPSHOT.jar --spring.profiles.active=local --
 cmd /c "curl -s -i http://127.0.0.1:18080/api/health"
 ```
 
+> 说明：当前 `pom.xml` 配置了 `spring-boot-maven-plugin` 的 `classifier=exec`，因此会同时生成：
+> - `blog-api-0.0.1-SNAPSHOT.jar`（普通 jar，通常不含可执行 main manifest）
+> - `blog-api-0.0.1-SNAPSHOT-exec.jar`（可执行 fat jar，用于 `java -jar`）
+
 ### 6.2 dev profile（连接数据库，用于后续业务开发）
 
 ```powershell
-java -jar .\target\blog-api-0.0.1-SNAPSHOT.jar --spring.profiles.active=dev
+java -jar .\target\blog-api-0.0.1-SNAPSHOT-exec.jar --spring.profiles.active=dev
 ```
 
 > 提示：MySQL 5.1 驱动使用 `com.mysql.jdbc.Driver`（已在 yml 中指定）。

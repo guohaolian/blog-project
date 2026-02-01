@@ -101,6 +101,7 @@ CREATE TABLE site_setting (
   seo_keywords VARCHAR(255) DEFAULT NULL,
   seo_description VARCHAR(255) DEFAULT NULL,
   footer_text VARCHAR(255) DEFAULT NULL,
+  banner_url VARCHAR(255) DEFAULT NULL,
   updated_at DATETIME NOT NULL,
   PRIMARY KEY (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -122,8 +123,8 @@ CREATE TABLE file_resource (
 INSERT INTO admin_user (username, password_hash, display_name, status, created_at, updated_at)
 VALUES ('admin', '$2a$10$sjGLhXaPfA4Ykj7B7b/Jb.6LDks4bWeTFDjbN3nKsg.e4FWCSCn06', 'Administrator', 1, NOW(), NOW());
 
-INSERT INTO site_setting (id, site_name, site_notice, about_content, links_json, seo_title, seo_keywords, seo_description, footer_text, updated_at)
-VALUES (1, 'My Blog', 'Welcome', '# About\n\nAbout page.', '[]', 'My Blog', 'blog,java,vue', 'A simple blog site', '(c) My Blog', NOW());
+INSERT INTO site_setting (id, site_name, site_notice, about_content, links_json, seo_title, seo_keywords, seo_description, footer_text, banner_url, updated_at)
+VALUES (1, 'My Blog', 'Welcome', '# About\n\nAbout page.', '[]', 'My Blog', 'blog,java,vue', 'A simple blog site', '(c) My Blog', NULL, NOW());
 
 -- Seed meta data for first run
 INSERT INTO category (name, created_at, updated_at)

@@ -8,12 +8,12 @@
 
 - Node.js：**20 LTS**（推荐 `20.x`，团队统一一个小版本即可）
 - npm：随 Node 自带（建议 `10.x`）
-- Vue：**3.4.x**
-- Vite：**5.4.x**
-- Vue Router：**4.3.x**
-- Pinia：**2.1.x**
-- Element Plus：**2.7.x**
-- Axios：**1.6.x**
+- Vue：**^3.5.24**
+- Vite：**^7.2.4**
+- Vue Router：**4.x**（以 `package.json`/lockfile 为准）
+- Pinia：**2.x**（以 `package.json`/lockfile 为准）
+- Element Plus：**2.x**（以 `package.json`/lockfile 为准）
+- Axios：**1.x**（以 `package.json`/lockfile 为准）
 
 工程化推荐（可选，但建议启用）：
 - TypeScript：**5.5.x**（推荐用 TS 提升长期维护性）

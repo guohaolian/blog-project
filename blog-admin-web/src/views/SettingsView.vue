@@ -28,6 +28,31 @@
         </div>
       </el-form-item>
 
+      <el-form-item label="Home banner">
+        <div style="display:flex; flex-direction:column; gap:10px; width: 100%">
+          <div style="display:flex; align-items:center; gap:10px; flex-wrap: wrap">
+            <el-upload
+              :show-file-list="false"
+              :auto-upload="false"
+              accept="image/*"
+              :on-change="onBannerFileChange"
+            >
+              <el-button type="primary">Upload banner</el-button>
+            </el-upload>
+
+            <el-button v-if="form.bannerUrl" @click="onClearBanner">Clear</el-button>
+            <el-input v-model="form.bannerUrl" placeholder="Or paste /uploads/... URL" />
+          </div>
+
+          <div v-if="form.bannerUrl" style="border: 1px solid var(--el-border-color); border-radius: 10px; overflow: hidden; max-width: 720px">
+            <img :src="form.bannerUrl" alt="banner" style="display:block; width: 100%; height: 220px; object-fit: cover" />
+          </div>
+          <div style="color: var(--el-text-color-secondary); font-size: 12px">
+            Tip: Banner will show as full-screen hero on Home page. Uploaded image will also appear in Resources.
+          </div>
+        </div>
+      </el-form-item>
+
       <el-divider />
 
       <el-form-item label="SEO title">
@@ -51,8 +76,10 @@
 
 <script setup lang="ts">
 import { onMounted, reactive, ref } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { adminGetSite, adminUpdateSite } from '../api/site'
+import { adminUploadImage } from '../api/upload'
+import { adminResourceDelete, adminResourcePage } from '../api/resources'
 
 const loading = ref(false)
 const saving = ref(false)
@@ -62,11 +89,63 @@ const form = reactive({
   siteNotice: '',
   aboutContent: '',
   linksJson: '[]',
+  bannerUrl: '',
   seoTitle: '',
   seoKeywords: '',
   seoDescription: '',
   footerText: '',
 })
+
+const loadedBannerUrl = ref('')
+const lastUploadedBannerUrl = ref('')
+
+async function onBannerFileChange(uploadFile: any) {
+  const f: File | undefined = uploadFile?.raw
+  if (!f) return
+  saving.value = true
+  try {
+    const r = await adminUploadImage(f)
+    form.bannerUrl = r.url
+    lastUploadedBannerUrl.value = r.url
+    ElMessage.success('Banner uploaded')
+  } finally {
+    saving.value = false
+  }
+}
+
+async function deleteResourceByUrl(url: string) {
+  // find by keyword(url) then delete first exact match
+  const page = await adminResourcePage({ pageNum: 1, pageSize: 10, keyword: url, contentTypePrefix: 'image/' })
+  const hit = (page.list || []).find((x) => x.url === url)
+  if (!hit) return false
+  await adminResourceDelete(hit.id)
+  return true
+}
+
+async function onClearBanner() {
+  const current = form.bannerUrl
+  form.bannerUrl = ''
+
+  // Only offer deletion when:
+  // - this banner was uploaded in this session
+  // - and it wasn't already saved as the site's banner when we loaded
+  const isNewUpload = !!current && current === lastUploadedBannerUrl.value
+  const wasSaved = !!current && current === loadedBannerUrl.value
+  if (!isNewUpload || wasSaved) return
+
+  try {
+    await ElMessageBox.confirm(
+      'Do you also want to delete this uploaded image from Resources? This will remove the file_resource record and try to delete the file from disk.',
+      'Delete resource?',
+      { type: 'warning', confirmButtonText: 'Delete', cancelButtonText: 'Keep' },
+    )
+    const ok = await deleteResourceByUrl(current)
+    if (ok) ElMessage.success('Resource deleted')
+    else ElMessage.info('Resource not found (maybe already deleted)')
+  } catch {
+    // user cancelled
+  }
+}
 
 async function load() {
   loading.value = true
@@ -76,10 +155,15 @@ async function load() {
     form.siteNotice = s.siteNotice || ''
     form.aboutContent = s.aboutContent || ''
     form.linksJson = s.linksJson || '[]'
+    form.bannerUrl = s.bannerUrl || ''
+    loadedBannerUrl.value = form.bannerUrl
+    lastUploadedBannerUrl.value = ''
     form.seoTitle = s.seoTitle || ''
     form.seoKeywords = s.seoKeywords || ''
     form.seoDescription = s.seoDescription || ''
     form.footerText = s.footerText || ''
+  } catch (e: any) {
+    ElMessage.error(`Failed to load settings: ${e?.message || e}`)
   } finally {
     loading.value = false
   }

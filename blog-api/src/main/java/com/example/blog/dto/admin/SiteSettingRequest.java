@@ -29,6 +29,10 @@ public class SiteSettingRequest {
     @Size(max = 255)
     private String footerText;
 
+    /** Homepage full-screen banner image URL (e.g. /uploads/yyyymm/xxx.jpg) */
+    @Size(max = 255)
+    private String bannerUrl;
+
     public String getSiteName() { return siteName; }
     public void setSiteName(String siteName) { this.siteName = siteName; }
 
@@ -52,4 +56,7 @@ public class SiteSettingRequest {
 
     public String getFooterText() { return footerText; }
     public void setFooterText(String footerText) { this.footerText = footerText; }
+
+    public String getBannerUrl() { return bannerUrl; }
+    public void setBannerUrl(String bannerUrl) { this.bannerUrl = bannerUrl; }
 }

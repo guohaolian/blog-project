@@ -47,7 +47,10 @@
   - `--server.port=18080`
 
 启动后验证：
-- `GET http://127.0.0.1:18080/api/health` 应返回 `{"status":"ok"}`
+- `GET http://127.0.0.1:18080/api/health` 应返回类似：`{"code":0,"message":"ok","data":{"status":"ok"},...}`
+
+> 说明：IDEA 直接运行 `BlogApiApplication` 不依赖可执行 jar；
+> 只有你使用命令行 `java -jar` 运行打包产物时，才需要选择 `blog-api-0.0.1-SNAPSHOT-exec.jar`（可执行 fat jar）。
 
 > 注意：PowerShell 的 `curl` 是别名，建议用：
 > - `cmd /c "curl -s -i http://127.0.0.1:18080/api/health"`

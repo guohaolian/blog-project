@@ -6,7 +6,7 @@ $ErrorActionPreference = 'Stop'
 
 $projectRoot = Split-Path -Parent $PSScriptRoot
 $apiDir = Join-Path $projectRoot 'blog-api'
-$jarPath = Join-Path $apiDir 'target\blog-api-0.0.1-SNAPSHOT.jar'
+$jarPath = Join-Path $apiDir 'target\blog-api-0.0.1-SNAPSHOT-exec.jar'
 
 Write-Host "[blog-api] Building..." -ForegroundColor Cyan
 Push-Location $apiDir

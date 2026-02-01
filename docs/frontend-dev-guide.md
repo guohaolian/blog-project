@@ -205,3 +205,46 @@
 - 后台发布文章后前台可见
 - 评论提交提示“待审核”，审核通过后前台可见
 - 站点设置修改后前台展示更新
+
+---
+
+## 12. 首页全屏 Banner（Home Hero）
+
+> 目标：进入首页首先展示全屏 Banner（可配置），提示用户向下滚动进入文章列表。
+
+### 12.1 数据来源
+
+- 字段：`SiteSettingVO.bannerUrl`
+- 获取：前台 `GET /api/site`
+- 管理端配置：后台 `Settings` 页面上传图片（调用 `POST /api/admin/upload/image`）后将返回的 `/uploads/**` URL 保存到 `bannerUrl`
+
+> 说明：上传接口会同步写入 `file_resource`，所以 Banner 图会在资源管理中可见。
+
+### 12.2 展示逻辑（blog-web）
+
+- 入口：`blog-web/src/views/HomeView.vue`
+- 满足以下条件才显示 Banner：`siteStore.bannerUrl` 非空
+- 交互：
+  - 首屏底部有弹跳“向下”按钮，点击会 smooth scroll 到文章列表
+  - 处于页面顶部时，首次向下滚轮也会滚到列表区域（更像 Landing Page 的体验）
+- 与导航栏配合：
+  - Banner 会延伸到 sticky topbar 下方
+  - topbar/notice 的半透明背景会“透出” Banner（避免出现纯色顶栏）
+
+### 12.3 避免颜色断层（叠层注意）
+
+Banner 的背景图与遮罩采用 `::before / ::after` 两层实现：
+- `::before` 承载背景图
+- `::after` 承载**统一强度**的暗化遮罩
+这样可避免 topbar/notice 半透明背景和 Banner 自身渐变遮罩叠加后产生“横向色带/断层”。
+
+---
+
+## 13. 管理端 Settings：Banner 清空与资源删除策略
+
+- 清空（Clear）= 站点不再使用该图（只清空 `bannerUrl`）
+- 资源删除（删除 `file_resource` + 尝试删除磁盘文件）需要显式操作
+
+当前实现（安全策略）：
+- 如果 Banner 是**本次 Settings 页面刚上传**且尚未保存为站点 Banner，点击 Clear 会弹窗询问是否同时删除该资源。
+- 对于已经保存过的 Banner，Clear 默认不提供自动删除（避免误删文章引用的图片）。

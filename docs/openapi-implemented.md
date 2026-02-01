@@ -82,7 +82,7 @@
 
 #### GET `/api/site`
 
-- 用途：获取站点设置（前台展示/SEO/公告/关于/友链）
+- 用途：获取站点设置（前台展示/SEO/公告/关于/友链/首页 Banner）
 - Auth：不需要
 
 **Response.data：SiteSettingVO（实现版）**
@@ -96,11 +96,13 @@
   "seoTitle": "My Blog",
   "seoKeywords": "blog,java,vue",
   "seoDescription": "...",
-  "footerText": "Copyright..."
+  "footerText": "Copyright...",
+  "bannerUrl": "/uploads/202602/xxx.jpg"
 }
 ```
 
-> 说明：友链使用 `linksJson` 字符串（JSON 数组）存储，前台用 `parseLinksJson()` 解析。
+> 说明：`bannerUrl` 用于前台首页全屏 Banner（可为空）。
+> 上传 Banner 建议通过管理端使用 `/api/admin/upload/image` 上传，返回的 `/uploads/**` URL 直接保存到 `bannerUrl`。
 
 ---
 

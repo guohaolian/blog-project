@@ -1,7 +1,24 @@
 <template>
   <div class="home">
+    <div
+      v-if="bannerUrl"
+      class="home-hero"
+      :style="{ backgroundImage: `url(${bannerUrl})` }"
+    >
+      <div class="home-hero__overlay">
+        <div class="container home-hero__inner">
+          <div class="home-hero__title">{{ site.siteName }}</div>
+          <div v-if="site.siteNotice" class="home-hero__subtitle">{{ site.siteNotice }}</div>
+        </div>
+
+        <button class="home-hero__down" type="button" @click="scrollToList" aria-label="Scroll down">
+          <span class="home-hero__downIcon">⌄</span>
+        </button>
+      </div>
+    </div>
+
     <div class="container">
-      <div class="home__grid">
+      <div ref="listAnchor" class="home__grid">
         <!-- main list -->
         <div>
           <el-card class="home__search" shadow="never">
@@ -12,28 +29,16 @@
             </div>
           </el-card>
 
-          <el-card v-for="p in list" :key="p.id" class="home__post" v-loading="loading">
-            <div class="home__postRow">
-              <router-link v-if="p.coverUrl" :to="`/post/${p.id}`" class="home__cover">
-                <img :src="p.coverUrl" alt="cover" loading="lazy" />
-              </router-link>
+          <div class="home__list" v-loading="loading">
+            <PostListCard
+              v-for="p in list"
+              :key="p.id"
+              :post="p"
+              class="home__post"
+            />
 
-              <div class="home__postMain">
-                <router-link :to="`/post/${p.id}`" class="home__postTitle">
-                  {{ p.title }}
-                </router-link>
-                <div class="home__postMeta">
-                  <span v-if="p.publishedAt">{{ p.publishedAt }}</span>
-                  <span v-if="p.category"> · {{ p.category.name }}</span>
-                </div>
-                <div class="home__postSummary">{{ p.summary }}</div>
-              </div>
-
-              <div class="home__postRight">Views: {{ p.viewCount ?? 0 }}</div>
-            </div>
-          </el-card>
-
-          <el-empty v-if="!loading && list.length === 0" description="No posts" />
+            <el-empty v-if="!loading && list.length === 0" description="No posts" />
+          </div>
 
           <div class="home__pager">
             <el-pagination
@@ -121,12 +126,13 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, onBeforeUnmount, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useSiteStore } from '../stores/site'
 import { usePostsStore } from '../stores/posts'
 import { getHotPosts, type HotPostVO } from '../api/posts'
 import { getCategories, getTags, type CategoryVO, type TagVO } from '../api/meta'
+import PostListCard from '../components/PostListCard.vue'
 
 const site = useSiteStore()
 const posts = usePostsStore()
@@ -174,23 +180,159 @@ function onPageSizeChange(ps: number) {
   fetchList()
 }
 
+const bannerUrl = computed(() => site.bannerUrl)
+const listAnchor = ref<HTMLElement | null>(null)
+
+function scrollToList() {
+  const topbarH = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--app-topbar-h')) || 0
+  const el = listAnchor.value
+  if (!el) return
+  const y = window.scrollY + el.getBoundingClientRect().top - topbarH - 8
+  window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' })
+}
+
+function onWheel(e: WheelEvent) {
+  if (!bannerUrl.value) return
+  if (window.scrollY > 8) return
+  if (e.deltaY > 0) {
+    // first scroll down from top takes you to list
+    scrollToList()
+  }
+}
+
 onMounted(async () => {
   await site.refresh()
   await fetchList()
   await loadHot()
   await loadMeta()
+
+  window.addEventListener('wheel', onWheel, { passive: true })
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('wheel', onWheel)
 })
 </script>
 
 <style scoped>
 .home {
-  padding: 18px 16px 32px;
+  padding: 18px 10px 32px;
+}
+
+.home-hero {
+  /* extend behind the sticky topbar */
+  margin-top: calc(-1 * (var(--app-topbar-h, 120px) + 14px));
+  height: 100vh;
+  min-height: 520px;
+  padding-top: calc(var(--app-topbar-h, 120px) + 14px);
+
+  position: relative;
+  isolation: isolate;
+
+  border-bottom: 1px solid var(--el-border-color);
+  overflow: hidden;
+}
+
+.home-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  /* reuse the element's background-image to avoid CSS var warnings */
+  background-image: inherit;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  transform: scale(1.02);
+}
+
+/* One consistent overlay to avoid visible “seam” near the topbar */
+.home-hero::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: rgba(0, 0, 0, 0.35);
+}
+
+.home-hero__overlay {
+  height: 100%;
+  position: relative;
+  /* remove the gradient that caused banding */
+  background: transparent;
+}
+
+.home-hero__inner {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 12px;
+}
+
+.home-hero__title {
+  color: #fff;
+  font-size: 44px;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  text-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+}
+
+.home-hero__subtitle {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 16px;
+  max-width: 760px;
+  line-height: 1.8;
+  text-shadow: 0 10px 24px rgba(0, 0, 0, 0.25);
+}
+
+.home-hero__down {
+  position: absolute;
+  left: 50%;
+  bottom: 22px;
+  transform: translateX(-50%);
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: rgba(0, 0, 0, 0.25);
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  animation: hero-bounce 1.2s infinite;
+}
+
+.home-hero__down:hover {
+  background: rgba(0, 0, 0, 0.35);
+}
+
+.home-hero__downIcon {
+  font-size: 22px;
+  line-height: 1;
+  transform: translateY(-2px);
+}
+
+@keyframes hero-bounce {
+  0%, 100% { transform: translateX(-50%) translateY(0); }
+  50% { transform: translateX(-50%) translateY(8px); }
+}
+
+@media (max-width: 760px) {
+  .home-hero__title {
+    font-size: 34px;
+  }
+  .home-hero {
+    min-height: 420px;
+  }
 }
 
 .home__grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 280px;
-  gap: 14px;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: 16px;
   align-items: start;
 }
 
@@ -201,7 +343,8 @@ onMounted(async () => {
 }
 
 .home__search {
-  margin-bottom: 12px;
+  margin-bottom: 14px;
+  border-radius: var(--app-radius);
 }
 
 .home__searchRow {
@@ -217,74 +360,16 @@ onMounted(async () => {
   }
 }
 
-.home__post {
-  margin-bottom: 12px;
-  /* make the card feel less cramped */
-  padding: 4px 0;
-}
-
-.home__postRow {
-  display: flex;
-  justify-content: space-between;
-  gap: 10px;
-  align-items: flex-start;
-  min-height: 190px;
-}
-
-.home__postMain {
-  min-width: 0;
-  flex: 1 1 auto;
-}
-
-.home__postTitle {
-  display: inline-block;
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--el-text-color-primary);
-}
-
-.home__postMeta {
-  color: var(--el-text-color-secondary);
-  margin: 6px 0;
-}
-
-.home__postSummary {
-  color: var(--el-text-color-regular);
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.home__postRight {
-  min-width: 90px;
-  text-align: right;
-  color: var(--el-text-color-secondary);
-  white-space: nowrap;
-  flex: 0 0 auto;
-}
-
-.home__pager {
-  margin-top: 12px;
-  display: flex;
-  justify-content: flex-end;
-}
-
 .home__side {
-  position: sticky;
-  top: 12px;
-}
-
-@media (max-width: 980px) {
-  .home__side {
-    position: static;
-  }
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
 
 .home__sideHeader {
   display: flex;
-  align-items: center;
   justify-content: space-between;
+  align-items: center;
   gap: 12px;
 }
 
@@ -311,62 +396,75 @@ onMounted(async () => {
 .home__hotRank {
   width: 22px;
   height: 22px;
-  border-radius: 6px;
+  border-radius: 7px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   font-size: 12px;
-  background: var(--el-fill-color-light);
-  color: var(--el-text-color-secondary);
+  font-weight: 800;
+  background: rgba(64, 158, 255, 0.12);
+  color: var(--el-color-primary);
 }
 
 .home__hotTitle {
+  display: inline-block;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: var(--el-text-color-primary);
 }
 
 .home__hotViews {
+  font-size: 12px;
   color: var(--el-text-color-secondary);
-  white-space: nowrap;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.04);
 }
 
-.home__cover {
-  width: 280px;
-  height: 180px;
-  flex: 0 0 auto;
-  border-radius: 8px;
-  overflow: hidden;
-  border: 1px solid var(--el-border-color);
-  background: var(--el-fill-color-light);
-}
-
-.home__cover img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-
-@media (max-width: 560px) {
-  .home__cover {
-    width: 120px;
-    height: 84px;
-  }
-
-  .home__postRight {
-    min-width: 68px;
-  }
-}
-
-.home__widget {
-  margin-top: 12px;
+html.dark .home__hotViews {
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .home__chipList {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+}
+
+.home__pager {
+  margin-top: 14px;
+  display: flex;
+  justify-content: center;
+}
+
+.home__list {
+  position: relative;
+  min-height: 120px;
+
+  /* Use flex+gap instead of relying on card margin; avoids any margin-collapse/"gray band" artifacts */
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+
+  /* give list area a subtle, consistent background so gaps don't look like "leaking" */
+  padding: 2px;
+  border-radius: var(--app-radius);
+}
+
+/* Remove the extra bottom margin from card itself in this page; gap takes care of spacing */
+.home__post {
+  margin-bottom: 0 !important;
+}
+
+/* Element Plus loading nodes are injected at runtime; IDE may warn 'unused selector' */
+.home__list :deep(.el-loading-mask) {
+  background-color: transparent;
+}
+
+/* Element Plus loading spinner/text are injected at runtime; keep readable */
+.home__list :deep(.el-loading-spinner .circular),
+.home__list :deep(.el-loading-spinner .el-loading-text) {
+  color: var(--el-color-primary);
 }
 </style>

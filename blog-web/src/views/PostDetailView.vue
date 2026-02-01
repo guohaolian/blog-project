@@ -1,6 +1,6 @@
 <template>
   <div class="post-detail">
-    <div class="post-detail__container" style="padding: 16px 0">
+    <div class="post-detail__container">
       <div class="post-detail__shell">
         <!-- left toc (independent column) -->
         <aside class="post-detail__left" v-if="toc.length > 0">
@@ -30,37 +30,38 @@
         <!-- middle content (single width, everything aligned) -->
         <main class="post-detail__main" ref="mainScrollEl">
           <div class="post-detail__content">
-            <el-button class="post-detail__back" type="primary" plain @click="back">
-              <el-icon style="margin-right: 6px"><ArrowLeft /></el-icon>
-              Back
-            </el-button>
+            <div class="post-hero">
+              <div class="post-hero__top">
+                <el-button class="post-detail__back" type="primary" plain @click="back">
+                  <el-icon style="margin-right: 6px"><ArrowLeft /></el-icon>
+                  Back
+                </el-button>
+              </div>
 
-            <h2 class="post-detail__title">{{ post?.title }}</h2>
-            <div class="post-detail__meta">
-              <span v-if="post?.publishedAt">{{ post.publishedAt }}</span>
-              <span v-if="post?.category"> · {{ post.category.name }}</span>
-              <span v-if="(post?.tags?.length || 0) > 0">
-                · Tags: {{ post?.tags?.map(t => t.name).join(', ') }}
-              </span>
-              <span> · Views: {{ post?.viewCount ?? 0 }}</span>
+              <h2 class="post-detail__title">{{ post?.title }}</h2>
+              <div class="post-detail__meta">
+                <span v-if="post?.publishedAt">{{ post.publishedAt }}</span>
+                <span v-if="post?.category"> · {{ post.category.name }}</span>
+                <span v-if="(post?.tags?.length || 0) > 0">
+                  · Tags: {{ post?.tags?.map(t => t.name).join(', ') }}
+                </span>
+                <span> · Views: {{ post?.viewCount ?? 0 }}</span>
+              </div>
+
+              <div v-if="post?.coverUrl" class="post-hero__cover">
+                <img :src="post.coverUrl" alt="cover" />
+              </div>
             </div>
           </div>
 
           <div class="post-detail__content">
             <el-card v-if="post" shadow="never">
-              <img
-                v-if="post.coverUrl"
-                :src="post.coverUrl"
-                alt="cover"
-                style="width: 100%; max-height: 360px; object-fit: cover; border-radius: 6px; margin-bottom: 12px"
-              />
-
               <el-alert
                 v-if="mdImageBrokenCount > 0"
                 type="warning"
                 :title="`${mdImageBrokenCount} image(s) failed to load (maybe deleted).`"
                 show-icon
-                style="margin-bottom: 12px"
+                class="post-detail__alert"
               />
 
               <div class="md" v-html="rendered" />
@@ -70,24 +71,24 @@
           </div>
 
           <div class="post-detail__content" style="margin-top: 16px">
-            <h3 style="margin: 0 0 8px">Comments</h3>
+            <h3 class="post-detail__sectionTitle">Comments</h3>
 
-            <el-card style="margin-bottom: 12px" v-loading="commentsLoading">
+            <el-card class="post-detail__comments" v-loading="commentsLoading" shadow="never">
               <el-empty v-if="!commentsLoading && comments.length === 0" description="No comments" />
               <div v-else>
-                <div v-for="c in comments" :key="c.id" style="padding: 8px 0; border-bottom: 1px solid var(--el-border-color)">
-                  <div style="display: flex; justify-content: space-between; gap: 12px">
-                    <div style="font-weight: 600">{{ c.nickname }}</div>
-                    <div style="color: #888; font-size: 12px">{{ c.createdAt }}</div>
+                <div v-for="c in comments" :key="c.id" class="comment">
+                  <div class="comment__top">
+                    <div class="comment__name">{{ c.nickname }}</div>
+                    <div class="comment__time">{{ c.createdAt }}</div>
                   </div>
-                  <div style="margin-top: 6px; white-space: pre-wrap">{{ c.content }}</div>
+                  <div class="comment__content">{{ c.content }}</div>
                 </div>
               </div>
             </el-card>
 
-            <el-card>
+            <el-card shadow="never">
               <template #header>
-                <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px">
+                <div class="post-detail__cardHeader">
                   <span>Leave a comment</span>
                 </div>
               </template>
@@ -104,11 +105,11 @@
                 </el-form-item>
               </el-form>
 
-              <div style="display: flex; justify-content: flex-end">
+              <div class="post-detail__actions">
                 <el-button type="primary" :loading="commentSubmitting" @click="submitComment">Submit</el-button>
               </div>
 
-              <div v-if="submitHint" style="margin-top: 8px; color: var(--el-text-color-secondary)">
+              <div v-if="submitHint" class="post-detail__hint">
                 {{ submitHint }}
               </div>
             </el-card>
@@ -427,23 +428,18 @@ function setupTocObserver() {
 .post-detail{
   --app-topbar-h:120px;
 }
-/* Wide container for post detail page (not limited to global .container 1200px) */
+
 .post-detail__container {
   max-width: 1500px;
   margin: 0 auto;
-  padding: 0 16px;
+  padding: 16px 18px;
 }
 
-/* 3 independent columns; center column doesn't depend on sidebars */
 .post-detail__shell {
   display: flex;
   gap: 14px;
   align-items: flex-start;
-
-  /* Sticky is computed within the scroll container; avoid accidental clipping */
   overflow: visible;
-
-  /* Only middle column scrolls; shell itself is fixed height */
   height: calc(100vh - var(--app-topbar-h, 120px));
 }
 
@@ -456,72 +452,123 @@ function setupTocObserver() {
 .post-detail__main {
   flex: 1 1 auto;
   min-width: 0;
-
-  /* make middle column the only scroll container */
   height: 100%;
   overflow: auto;
-  padding-right: 6px; /* leave room for scrollbar */
+  padding-right: 6px;
 }
 
-.post-detail__side {
-  height: 100%;
+.post-detail__content {
+  margin-bottom: 14px;
 }
 
-.post-detail__sideInner {
-  height: 100%;
-  overflow: hidden; /* left/right should not scroll */
+.post-hero {
+  border-radius: var(--app-radius);
+  border: 1px solid var(--el-border-color);
+  background: rgba(255, 255, 255, 0.60);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  padding: 14px;
 }
 
-/* Middle column scroll UX */
-.post-detail__main::-webkit-scrollbar {
-  width: 10px;
+html.dark .post-hero {
+  background: rgba(18, 20, 24, 0.55);
 }
 
-.post-detail__main::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.16);
-  border-radius: 10px;
+.post-hero__top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
 }
 
-.post-detail__main::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 0, 0, 0.28);
+.post-hero__cover {
+  margin-top: 12px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--el-fill-color-light);
 }
 
-@media (max-width: 1200px) {
-  .post-detail__left {
-    display: none;
-  }
-}
-
-@media (max-width: 860px) {
-  .post-detail__right {
-    display: none;
-  }
-}
-
-@media (max-width: 860px) {
-  .post-detail__shell {
-    height: auto;
-  }
-  .post-detail__main {
-    height: auto;
-    overflow: visible;
-    padding-right: 0;
-  }
+.post-hero__cover img {
+  width: 100%;
+  max-height: 360px;
+  object-fit: cover;
+  display: block;
 }
 
 .post-detail__title {
-  margin: 8px 0 4px;
+  margin: 6px 0 4px;
+  font-size: 28px;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
 }
 
 .post-detail__meta {
-  color: #888;
+  color: var(--el-text-color-secondary);
+  margin-bottom: 8px;
+  font-size: 13px;
+}
+
+.post-detail__sectionTitle {
+  margin: 0 0 10px;
+  font-weight: 900;
+  letter-spacing: -0.01em;
+}
+
+.post-detail__alert {
   margin-bottom: 12px;
 }
 
+.comment {
+  padding: 10px 0;
+  border-bottom: 1px dashed var(--el-border-color);
+}
+
+.comment:last-child {
+  border-bottom: none;
+}
+
+.comment__top {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.comment__name {
+  font-weight: 800;
+}
+
+.comment__time {
+  color: var(--el-text-color-secondary);
+  font-size: 12px;
+}
+
+.comment__content {
+  margin-top: 6px;
+  white-space: pre-wrap;
+  line-height: 1.7;
+}
+
+.post-detail__cardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.post-detail__actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.post-detail__hint {
+  margin-top: 8px;
+  color: var(--el-text-color-secondary);
+}
 
 /* Make back button more visible */
 .post-detail__back {
-  margin-bottom: 10px;
   border-width: 2px;
   font-weight: 700;
 }
@@ -532,6 +579,17 @@ function setupTocObserver() {
 
 .post-detail__back:active {
   transform: translateY(1px);
+}
+
+/* keep existing toc/related/md styles below */
+
+.post-detail__side {
+  height: 100%;
+}
+
+.post-detail__sideInner {
+  height: 100%;
+  overflow: hidden; /* left/right should not scroll */
 }
 
 .toc {
@@ -545,30 +603,32 @@ function setupTocObserver() {
   color: var(--el-text-color-regular);
   font-size: 13px;
   line-height: 1.4;
-  padding: 2px 6px;
-  border-radius: 6px;
+  padding: 4px 8px;
+  border-radius: 10px;
+  transition: background 140ms ease, color 140ms ease;
 }
 
 .toc__item:hover {
   color: var(--el-color-primary);
+  background: rgba(64, 158, 255, 0.10);
 }
 
 .toc__item--active {
   background: var(--el-fill-color-light);
   color: var(--el-color-primary);
-  font-weight: 700;
+  font-weight: 800;
 }
 
 .toc__item--l2 {
-  padding-left: 0;
+  padding-left: 8px;
 }
 
 .toc__item--l3 {
-  padding-left: 12px;
+  padding-left: 18px;
 }
 
 .toc__item--l4 {
-  padding-left: 24px;
+  padding-left: 30px;
 }
 
 .related {
@@ -582,34 +642,65 @@ function setupTocObserver() {
   color: var(--el-text-color-regular);
   font-size: 13px;
   line-height: 1.4;
-  padding: 2px 6px;
-  border-radius: 6px;
+  padding: 4px 8px;
+  border-radius: 10px;
+  transition: background 140ms ease, color 140ms ease;
 }
 
 .related__item:hover {
   color: var(--el-color-primary);
+  background: rgba(64, 158, 255, 0.10);
 }
 
 .related__item--active {
   color: var(--el-color-primary);
-  font-weight: 700;
+  font-weight: 800;
   background: var(--el-fill-color-light);
 }
 
+/* Markdown polish */
 .md :deep(p) {
   margin: 0 0 12px;
+}
+
+.md :deep(h2) {
+  margin: 18px 0 10px;
+  padding-top: 6px;
+  font-size: 20px;
+  font-weight: 900;
+  letter-spacing: -0.01em;
+}
+
+.md :deep(h3) {
+  margin: 16px 0 8px;
+  font-size: 17px;
+  font-weight: 900;
+}
+
+.md :deep(blockquote) {
+  margin: 12px 0;
+  padding: 10px 12px;
+  border-left: 4px solid var(--el-color-primary);
+  background: rgba(64, 158, 255, 0.08);
+  border-radius: 10px;
+}
+
+html.dark .md :deep(blockquote) {
+  background: rgba(64, 158, 255, 0.12);
 }
 
 .md :deep(table) {
   width: 100%;
   border-collapse: collapse;
   margin: 12px 0;
+  overflow: hidden;
+  border-radius: 10px;
 }
 
 .md :deep(th),
 .md :deep(td) {
   border: 1px solid var(--el-border-color);
-  padding: 8px;
+  padding: 10px;
   text-align: left;
 }
 
@@ -624,16 +715,25 @@ function setupTocObserver() {
 .md :deep(img) {
   max-width: 100%;
   height: auto;
+  border-radius: 10px;
 }
 
 .md :deep(pre) {
   background: var(--el-fill-color-light);
   padding: 12px;
-  border-radius: 6px;
+  border-radius: 10px;
   overflow: auto;
+  border: 1px solid var(--el-border-color);
 }
 
 .md :deep(code) {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+}
+
+.md :deep(p > code) {
+  background: var(--el-fill-color-light);
+  border: 1px solid var(--el-border-color);
+  padding: 2px 6px;
+  border-radius: 8px;
 }
 </style>

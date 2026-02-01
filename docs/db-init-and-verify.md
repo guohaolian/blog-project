@@ -52,12 +52,26 @@ mysql -uroot -p < "E:\blog-project\deploy\sql\init.sql"
 ```powershell
 mysql -uroot -p -e "USE blog_db; SHOW TABLES;"
 mysql -uroot -p -e "USE blog_db; SELECT id,username,status FROM admin_user;"
-mysql -uroot -p -e "USE blog_db; SELECT id,site_name FROM site_setting;"
+mysql -uroot -p -e "USE blog_db; SELECT id,site_name,banner_url FROM site_setting;"
 ```
 
 期望结果：
 - `SHOW TABLES` 至少包含：`admin_user, post, category, tag, comment, site_setting, file_resource` 等
 - `admin_user` 至少有 `admin` 一条
+
+---
+
+## 3.5 旧库升级（不想重跑 init.sql）
+
+如果你已经有数据，不想重复执行 `deploy/sql/init.sql`（会 DROP TABLE 清空数据），可以执行增量 SQL：
+
+```sql
+USE blog_db;
+ALTER TABLE site_setting
+  ADD COLUMN banner_url VARCHAR(255) DEFAULT NULL;
+```
+
+> 如果提示 Duplicate column，说明你已经升级过。
 
 ---
 
@@ -84,13 +98,13 @@ mysql -uroot -p -e "USE blog_db; SELECT id,site_name FROM site_setting;"
 ```powershell
 cd E:\blog-project\blog-api
 mvn -q -DskipTests package
-java -jar .\target\blog-api-0.0.1-SNAPSHOT.jar --spring.profiles.active=local --server.port=18080
+java -jar .\target\blog-api-0.0.1-SNAPSHOT-exec.jar --spring.profiles.active=local --server.port=18080
 ```
 
 再切回 dev profile：
 
 ```powershell
-java -jar .\target\blog-api-0.0.1-SNAPSHOT.jar --spring.profiles.active=dev
+java -jar .\target\blog-api-0.0.1-SNAPSHOT-exec.jar --spring.profiles.active=dev
 ```
 
 验证 health：

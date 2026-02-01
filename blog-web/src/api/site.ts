@@ -9,6 +9,7 @@ export interface SiteSettingVO {
   seoKeywords?: string | null
   seoDescription?: string | null
   footerText?: string | null
+  bannerUrl?: string | null
 }
 
 export function getSiteSetting() {

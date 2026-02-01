@@ -1,20 +1,22 @@
 <template>
   <div>
     <div class="app-topbar" :class="{ 'is-scrolled': topbarScrolled }">
-      <div class="app-topbar__main" style="border-bottom: 1px solid var(--el-border-color); padding: 10px 16px">
+      <div class="app-topbar__main">
         <div class="container app-header">
-          <div style="font-weight: 700">{{ site.siteName }}</div>
+          <div class="app-brand" @click="$router.push('/')">
+            <div class="app-brand__name">{{ site.siteName }}</div>
+          </div>
           <div class="app-nav">
-            <el-button text @click="$router.push('/')">Home</el-button>
-            <el-button text @click="$router.push('/archives')">Archives</el-button>
-            <el-button text @click="$router.push('/categories')">Categories</el-button>
-            <el-button text @click="$router.push('/tags')">Tags</el-button>
-            <el-button text @click="$router.push('/about')">About</el-button>
-            <el-button text @click="$router.push('/links')">Links</el-button>
+            <el-button text class="app-nav__btn" @click="$router.push('/')">Home</el-button>
+            <el-button text class="app-nav__btn" @click="$router.push('/archives')">Archives</el-button>
+            <el-button text class="app-nav__btn" @click="$router.push('/categories')">Categories</el-button>
+            <el-button text class="app-nav__btn" @click="$router.push('/tags')">Tags</el-button>
+            <el-button text class="app-nav__btn" @click="$router.push('/about')">About</el-button>
+            <el-button text class="app-nav__btn" @click="$router.push('/links')">Links</el-button>
 
-            <div style="width: 12px" />
+            <div class="app-nav__spacer" />
             <el-tooltip content="Theme" placement="bottom">
-              <div style="display:flex;align-items:center;gap:8px">
+              <div class="app-theme">
                 <el-segmented
                   v-model="theme.mode"
                   :options="themeOptions"
@@ -22,24 +24,24 @@
                   @change="(v: any) => theme.setMode(v)"
                 />
 
-                <div v-if="theme.mode === 'auto'" style="display:flex;align-items:center;gap:6px">
+                <div v-if="theme.mode === 'auto'" class="app-theme__window">
                   <el-tooltip content="Dark window start (HH:mm)" placement="bottom">
                     <el-input
                       v-model="autoStart"
                       size="small"
-                      style="width: 70px"
+                      class="app-theme__time"
                       placeholder="19:00"
                       maxlength="5"
                       @blur="applyAutoWindow"
                       @keyup.enter="applyAutoWindow"
                     />
                   </el-tooltip>
-                  <span style="opacity: 0.7">~</span>
+                  <span class="app-theme__sep">~</span>
                   <el-tooltip content="Dark window end (HH:mm)" placement="bottom">
                     <el-input
                       v-model="autoEnd"
                       size="small"
-                      style="width: 70px"
+                      class="app-theme__time"
                       placeholder="07:00"
                       maxlength="5"
                       @blur="applyAutoWindow"
@@ -53,19 +55,19 @@
         </div>
       </div>
 
-      <div
-        v-if="site.siteNotice"
-        class="app-topbar__notice"
-        style="border-bottom: 1px solid var(--el-border-color); padding: 8px 16px"
-      >
-        <div class="container" style="color: var(--el-text-color-regular)">
+      <div v-if="site.siteNotice" class="app-topbar__notice">
+        <div class="container app-notice">
           {{ site.siteNotice }}
         </div>
       </div>
     </div>
 
     <div class="app-page">
-      <router-view />
+      <router-view v-slot="{ Component }">
+        <transition name="page" mode="out-in">
+          <component :is="Component" :key="route.fullPath" />
+        </transition>
+      </router-view>
     </div>
 
     <BackToTopFab :target="backToTopTarget" />
@@ -217,52 +219,111 @@ onBeforeUnmount(() => {
 .app-topbar {
   position: sticky;
   top: 0;
-  z-index: 2000;
-  /* wrapper background: keep subtle transparency even at top */
-  background: rgba(7, 54, 101, 0.35);
-  transition: background-color 160ms ease, box-shadow 160ms ease;
-}
-
-/* blur (frosted glass) when the topbar is in scrolled state */
-.app-topbar.is-scrolled {
-  background: rgba(7, 54, 101, 0.35);
-  backdrop-filter: saturate(1.4) blur(14px);
-  -webkit-backdrop-filter: saturate(1.4) blur(14px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.10);
-}
-
-@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .app-topbar.is-scrolled {
-    background: rgba(7, 54, 101, 0.35);
-  }
+  z-index: 10;
 }
 
 .app-topbar__main {
-  /* nav background with transparency */
-  background: rgba(170, 190, 211, 0.95);
+  border-bottom: 1px solid var(--el-border-color);
+  padding: 10px 0;
+  background: rgba(255, 255, 255, 0.70);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transition: box-shadow 160ms ease, background 160ms ease;
+}
+
+html.dark .app-topbar__main {
+  background: rgba(18, 20, 24, 0.70);
+}
+
+.app-topbar.is-scrolled .app-topbar__main {
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
 }
 
 .app-topbar__notice {
-  /* notice background: slightly tinted + transparent */
-  background: rgba(171, 197, 236, 0.35);
+  border-bottom: 1px solid var(--el-border-color);
+  padding: 8px 0;
+  background: rgba(255, 255, 255, 0.62);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 
-.app-page {
-  /* make sure fixed/sticky topbar doesn't overlap page content */
-  padding-top: 0;
+html.dark .app-topbar__notice {
+  background: rgba(18, 20, 24, 0.62);
+}
+
+.app-notice {
+  color: var(--el-text-color-regular);
+  font-size: 13px;
 }
 
 .app-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 14px;
+}
+
+.app-brand {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+}
+
+.app-brand__name {
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  font-size: 16px;
+  line-height: 1;
 }
 
 .app-nav {
   display: flex;
-  gap: 8px;
+  align-items: center;
+  gap: 2px;
   flex-wrap: wrap;
   justify-content: flex-end;
+}
+
+.app-nav__btn {
+  border-radius: 10px;
+}
+
+.app-nav__spacer {
+  width: 10px;
+}
+
+.app-theme {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.app-theme__window {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.app-theme__time {
+  width: 74px;
+}
+
+.app-theme__sep {
+  opacity: 0.7;
+}
+
+.app-page {
+  padding-top: 14px;
+}
+
+@media (max-width: 760px) {
+  .app-nav {
+    width: 100%;
+    justify-content: flex-start;
+  }
+  .app-header {
+    align-items: flex-start;
+  }
 }
 </style>

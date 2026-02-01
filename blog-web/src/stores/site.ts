@@ -22,6 +22,7 @@ export const useSiteStore = defineStore('site', {
     seoKeywords: (s) => s.setting?.seoKeywords || '',
     seoDescription: (s) => s.setting?.seoDescription || '',
     footerText: (s) => s.setting?.footerText || '',
+    bannerUrl: (s) => s.setting?.bannerUrl || '',
   },
   actions: {
     async refresh(force = false) {

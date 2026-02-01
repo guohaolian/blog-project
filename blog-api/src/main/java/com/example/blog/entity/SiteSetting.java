@@ -20,6 +20,10 @@ public class SiteSetting {
     private String seoKeywords;
     private String seoDescription;
     private String footerText;
+
+    /** Homepage full-screen banner image (stored as /uploads/... URL) */
+    private String bannerUrl;
+
     private LocalDateTime updatedAt;
 
     public Long getId() { return id; }
@@ -48,6 +52,9 @@ public class SiteSetting {
 
     public String getFooterText() { return footerText; }
     public void setFooterText(String footerText) { this.footerText = footerText; }
+
+    public String getBannerUrl() { return bannerUrl; }
+    public void setBannerUrl(String bannerUrl) { this.bannerUrl = bannerUrl; }
 
     public LocalDateTime getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }

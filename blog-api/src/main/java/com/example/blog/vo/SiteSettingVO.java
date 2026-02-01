@@ -11,6 +11,9 @@ public class SiteSettingVO {
     private String seoDescription;
     private String footerText;
 
+    /** Homepage full-screen banner image URL */
+    private String bannerUrl;
+
     public String getSiteName() { return siteName; }
     public void setSiteName(String siteName) { this.siteName = siteName; }
 
@@ -34,4 +37,7 @@ public class SiteSettingVO {
 
     public String getFooterText() { return footerText; }
     public void setFooterText(String footerText) { this.footerText = footerText; }
+
+    public String getBannerUrl() { return bannerUrl; }
+    public void setBannerUrl(String bannerUrl) { this.bannerUrl = bannerUrl; }
 }

@@ -12,6 +12,15 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+  /* ===== App subtle design tokens (non-invasive) ===== */
+  --app-radius: 14px;
+  --app-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+  --app-shadow-hover: 0 14px 40px rgba(0, 0, 0, 0.10);
+  --app-container: 1240px;
+
+  /* Ensure Element Plus dropdowns/selects/poppers are always above fixed bg and cards */
+  --el-z-index-popper: 3000;
 }
 
 /* Dark mode: Element Plus dark variables are enabled when <html> has class `dark` */
@@ -19,15 +28,51 @@ html.dark {
   color-scheme: dark;
 }
 
-/* Ensure body background follows Element Plus theme variables */
-body {
-  background: var(--el-bg-color, #f5f6f7);
-  color: var(--el-text-color-primary, #213547);
+/* Background layer: fixed to viewport to avoid any scroll seam */
+html {
+  -webkit-text-size-adjust: 100%;
+  position: relative;
 }
 
-/* Link colors should follow current theme */
-a {
-  color: var(--el-color-primary);
+html::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(1200px 500px at 10% -10%, rgba(64, 158, 255, 0.20), transparent 55%),
+    radial-gradient(900px 420px at 92% 0%, rgba(103, 194, 58, 0.12), transparent 55%),
+    var(--el-bg-color, #f5f6f7);
+}
+
+html.dark::before {
+  background:
+    radial-gradient(1200px 500px at 10% -10%, rgba(64, 158, 255, 0.18), transparent 55%),
+    radial-gradient(900px 420px at 92% 0%, rgba(103, 194, 58, 0.10), transparent 55%),
+    var(--el-bg-color, #0b0f14);
+}
+
+/* Keep body transparent so the fixed background shows through */
+body {
+  background: transparent;
+  color: var(--el-text-color-primary, #213547);
+  position: relative;
+  z-index: 1;
+}
+
+/* Ensure Element Plus poppers are always visible above everything */
+.el-popper,
+.el-select__popper,
+.el-dropdown__popper,
+.el-tooltip__popper {
+  z-index: 9999 !important;
+}
+
+/* Defensive: avoid popper being clipped by any ancestor stacking/overflow quirks */
+.el-select__popper,
+.el-dropdown__popper {
+  position: fixed !important;
 }
 
 /* =============================
@@ -58,8 +103,19 @@ body {
   font-family: inherit;
   line-height: inherit;
   color: inherit;
-  background: var(--el-bg-color, #f5f6f7);
+  /* background is defined above (with gradients); don't override it here */
   text-rendering: optimizeLegibility;
+}
+
+/* Improve default typography a bit */
+h1,
+h2,
+h3 {
+  letter-spacing: -0.01em;
+}
+
+p {
+  line-height: 1.7;
 }
 
 /* Media elements */
@@ -115,16 +171,11 @@ table {
   border-spacing: 0;
 }
 
-/* Prevent iOS text size adjust */
-html {
-  -webkit-text-size-adjust: 100%;
-}
-
 /* Shared layout container (aligns header + pages) */
 .container {
-  max-width: 1200px;
+  max-width: var(--app-container);
   margin: 0 auto;
-  padding: 0 16px;
+  padding: 0 18px;
 }
 
 /* App link style (after reset) */
@@ -134,4 +185,69 @@ a {
 
 a:hover {
   text-decoration: underline;
+}
+
+/* ===== Element Plus: global card polish ===== */
+.el-card {
+  border-radius: var(--app-radius);
+  border-color: rgba(0, 0, 0, 0.06);
+}
+
+html.dark .el-card {
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.el-card.is-hover-shadow:hover {
+  box-shadow: var(--app-shadow-hover);
+}
+
+/* subtle default shadow for cards that are not "shadow=never" */
+.el-card:not(.is-never-shadow) {
+  box-shadow: var(--app-shadow);
+}
+
+/* ===== Scrollbar (webkit) ===== */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.18);
+  border-radius: 999px;
+}
+
+html.dark ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.28);
+}
+
+html.dark ::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.24);
+}
+
+/* ===== Page transitions (used by App router-view wrapper if enabled) ===== */
+.page-enter-active,
+.page-leave-active {
+  transition: opacity 160ms ease, transform 160ms ease;
+}
+
+.page-enter-from,
+.page-leave-to {
+  opacity: 0;
+  transform: translateY(6px);
+}
+
+/* Better focus outlines for accessibility */
+:focus-visible {
+  outline: 2px solid rgba(64, 158, 255, 0.55);
+  outline-offset: 3px;
+  border-radius: 8px;
+}
+
+::selection {
+  background: rgba(64, 158, 255, 0.25);
 }

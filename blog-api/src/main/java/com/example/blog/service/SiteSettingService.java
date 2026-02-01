@@ -42,6 +42,7 @@ public class SiteSettingService {
         s.setSeoKeywords(req.getSeoKeywords());
         s.setSeoDescription(req.getSeoDescription());
         s.setFooterText(req.getFooterText());
+        s.setBannerUrl(req.getBannerUrl());
         s.setUpdatedAt(LocalDateTime.now());
 
         siteSettingMapper.updateById(s);
@@ -58,6 +59,7 @@ public class SiteSettingService {
         s.setSeoKeywords("blog,java,vue");
         s.setSeoDescription("A simple blog site");
         s.setFooterText("(c) My Blog");
+        s.setBannerUrl(null);
         s.setUpdatedAt(LocalDateTime.now());
 
         // if row already inserted concurrently, ignore
@@ -80,6 +82,7 @@ public class SiteSettingService {
         vo.setSeoKeywords(s.getSeoKeywords());
         vo.setSeoDescription(s.getSeoDescription());
         vo.setFooterText(s.getFooterText());
+        vo.setBannerUrl(s.getBannerUrl());
         return vo;
     }
 }

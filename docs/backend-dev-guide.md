@@ -146,6 +146,26 @@ PRD 已明确角色：VISITOR（匿名）+ ADMIN（后台）。v1.0 **不做“�
 - 前台 GET `/api/site`
 - 后台 GET/PUT `/api/admin/site`
 
+站点设置字段（实现版）包含：
+- siteName/siteNotice/aboutContent/linksJson
+- seoTitle/seoKeywords/seoDescription/footerText
+- **bannerUrl**：首页全屏 Banner 图片 URL（例如 `/uploads/yyyyMM/uuid.jpg`，可为空）
+
+#### 数据库迁移（已有库升级）
+如果你的库是旧结构（没有 `banner_url`），需要执行一次增量 SQL：
+
+```sql
+ALTER TABLE site_setting
+  ADD COLUMN banner_url VARCHAR(255) DEFAULT NULL;
+```
+
+> 说明：如果你重跑 `deploy/sql/init.sql`，脚本会 DROP TABLE（会清空数据）。
+
+#### Banner 上传与资源记录
+- 管理端上传图片：`POST /api/admin/upload/image`
+- 上传成功会返回 `/uploads/**` URL，并且会 best-effort 写入 `file_resource`（用于资源管理列表）
+- 清空 `bannerUrl` 只表示站点不再使用该图，不等于删除资源文件；删除资源请使用资源管理删除接口。
+
 ### 6.5 资源 file_resource（可选但 v1.0 推荐）
 - 上传时落库（url、原始名、大小、类型、创建时间）
 - 资源列表分页 + 删除
