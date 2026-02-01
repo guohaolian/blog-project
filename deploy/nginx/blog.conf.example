@@ -1,5 +1,95 @@
 # Nginx site example (adjust domain names and paths)
 
+# ============================
+# Option A (recommended): single domain
+# - /        -> blog-web (SPA)
+# - /admin/  -> blog-admin-web (SPA)
+# - /api/    -> blog-api (Spring Boot)
+# - /uploads -> static files on disk
+# ============================
+
+server {
+    listen 80;
+    server_name _;
+
+    # ---- paths (adjust to your server) ----
+    # Put built files (dist/) here:
+    #   blog-web/dist        -> /opt/blog/www/blog-web
+    #   blog-admin-web/dist  -> /opt/blog/www/blog-admin-web
+    root /opt/blog/www/blog-web;
+    index index.html;
+
+    # ---------- common proxy headers ----------
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+
+    # ---------- API (keep /api prefix) ----------
+    # Backend should expose endpoints like: /api/health, /api/admin/..., etc.
+    location /api/ {
+        proxy_pass http://127.0.0.1:8080;
+        proxy_http_version 1.1;
+        proxy_connect_timeout 5s;
+        proxy_read_timeout 60s;
+    }
+
+    # ---------- uploads mapping ----------
+    # Important: use alias (not root) so /uploads/xxx maps to /opt/blog/uploads/xxx
+    location /uploads/ {
+        alias /opt/blog/uploads/;
+        autoindex off;
+        access_log off;
+
+        # cache static resources
+        add_header Cache-Control "public, max-age=31536000, immutable";
+        try_files $uri =404;
+    }
+
+    # ---------- admin SPA under /admin/ ----------
+    # Place admin dist under: /opt/blog/www/blog-admin-web
+    location ^~ /admin/ {
+        alias /opt/blog/www/blog-admin-web/;
+        try_files $uri $uri/ /admin/index.html;
+
+        # no cache for html
+        location ~* \.html$ {
+            add_header Cache-Control "no-store";
+        }
+
+        # cache assets
+        location ~* \.(js|css|png|jpg|jpeg|gif|svg|ico|webp|woff2?)$ {
+            add_header Cache-Control "public, max-age=31536000, immutable";
+            access_log off;
+        }
+    }
+
+    # ---------- blog-web SPA ----------
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    # no cache for html
+    location ~* \.html$ {
+        add_header Cache-Control "no-store";
+    }
+
+    # cache assets
+    location ~* \.(js|css|png|jpg|jpeg|gif|svg|ico|webp|woff2?)$ {
+        add_header Cache-Control "public, max-age=31536000, immutable";
+        access_log off;
+    }
+
+    # gzip (optional)
+    gzip on;
+    gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript;
+    gzip_min_length 1024;
+}
+
+# ============================
+# Option B: dual domain (legacy example)
+# ============================
+
 # blog-web
 server {
     listen 80;
@@ -13,15 +103,17 @@ server {
     }
 
     location /api/ {
-        proxy_pass http://127.0.0.1:8080/;
+        proxy_pass http://127.0.0.1:8080;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
     }
 
     location /uploads/ {
         alias /opt/blog/uploads/;
         autoindex off;
+        try_files $uri =404;
     }
 }
 
@@ -38,14 +130,16 @@ server {
     }
 
     location /api/ {
-        proxy_pass http://127.0.0.1:8080/;
+        proxy_pass http://127.0.0.1:8080;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
     }
 
     location /uploads/ {
         alias /opt/blog/uploads/;
         autoindex off;
+        try_files $uri =404;
     }
 }

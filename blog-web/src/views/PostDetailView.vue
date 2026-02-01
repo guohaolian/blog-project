@@ -154,8 +154,10 @@ import { getPostDetail, getPosts, type PostDetailVO, type PostListItemVO } from 
 import { createPostComment, getPostComments, type CommentVO } from '../api/comments'
 import { usePostsStore } from '../stores/posts'
 import { useSiteStore } from '../stores/site'
-import { enableMarkdownHighlight, renderMarkdownWithToc, type TocItem } from '../utils/markdown'
 import { ArrowLeft } from '@element-plus/icons-vue'
+
+// markdown utils are lazy-loaded so markdown/highlight libs don't bloat the initial bundle
+import type { TocItem } from '../utils/markdown'
 
 const route = useRoute()
 const router = useRouter()
@@ -184,14 +186,31 @@ const commentForm = reactive({
 
 const mainScrollEl = ref<HTMLElement | null>(null)
 
-function rebuildMarkdown() {
+let mdApi: null | {
+  enableMarkdownHighlight: () => Promise<void>
+  renderMarkdownWithToc: (content: string) => { html: string; toc: TocItem[] }
+} = null
+
+async function ensureMarkdownApi() {
+  if (mdApi) return mdApi
+  const m = await import('../utils/markdown')
+  mdApi = {
+    enableMarkdownHighlight: m.enableMarkdownHighlight,
+    renderMarkdownWithToc: m.renderMarkdownWithToc,
+  }
+  return mdApi
+}
+
+async function rebuildMarkdown() {
   if (!post.value) {
     rendered.value = ''
     toc.value = []
     mdImageBrokenCount.value = 0
     return
   }
-  const { html, toc: t } = renderMarkdownWithToc(post.value.content || '')
+
+  const api = await ensureMarkdownApi()
+  const { html, toc: t } = api.renderMarkdownWithToc(post.value.content || '')
   rendered.value = html
   toc.value = t
 }
@@ -307,8 +326,6 @@ async function back() {
 }
 
 async function loadPost(id: number) {
-  // enable highlight.js only for detail pages
-  await enableMarkdownHighlight()
   post.value = await getPostDetail(id)
   rebuildMarkdown()
 
@@ -334,6 +351,14 @@ async function loadPost(id: number) {
 }
 
 onMounted(async () => {
+  // enable highlight only on this page
+  try {
+    const api = await ensureMarkdownApi()
+    await api.enableMarkdownHighlight()
+  } catch {
+    // ignore highlight failures (markdown should still render)
+  }
+
   await loadPost(Number(route.params.id))
 })
 
