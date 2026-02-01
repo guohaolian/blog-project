@@ -1,15 +1,34 @@
 package com.example.blog.vo.admin;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 import java.util.List;
 
+@Schema(description = "Admin post edit model")
 public class AdminPostEditVO {
+
+    @Schema(description = "Post id", example = "1")
     private Long id;
+
+    @Schema(description = "Title", example = "Hello World")
     private String title;
+
+    @Schema(description = "Summary", example = "Short introduction")
     private String summary;
+
+    @Schema(description = "Content in Markdown", example = "# Heading\n\nContent...")
     private String content;
+
+    @Schema(description = "Cover image URL", example = "/uploads/202602/cover.jpg")
     private String coverUrl;
+
+    @Schema(description = "Category id", example = "1")
     private Long categoryId;
+
+    @Schema(description = "Tag ids", example = "[1,2,3]")
     private List<Long> tagIds;
+
+    @Schema(description = "Status", example = "DRAFT", allowableValues = {"DRAFT", "PUBLISHED"})
     private String status;
 
     public Long getId() { return id; }

@@ -1,12 +1,22 @@
 package com.example.blog.common;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 import java.time.Instant;
 
+@Schema(description = "Standard API response wrapper")
 public class ApiResponse<T> {
 
+    @Schema(description = "Business status code. 0 means ok, non-zero means error.", example = "0")
     private int code;
+
+    @Schema(description = "Message for humans", example = "ok")
     private String message;
+
+    @Schema(description = "Response data payload")
     private T data;
+
+    @Schema(description = "Server timestamp in milliseconds", example = "1700000000000")
     private long timestamp;
 
     public ApiResponse() {

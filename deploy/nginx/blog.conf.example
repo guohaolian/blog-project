@@ -32,6 +32,53 @@ server {
         proxy_http_version 1.1;
         proxy_connect_timeout 5s;
         proxy_read_timeout 60s;
+
+        # IMPORTANT: forward Authorization header for JWT (admin APIs + swagger "Authorize")
+        proxy_set_header Authorization $http_authorization;
+    }
+
+    # ---------- Swagger / OpenAPI (optional) ----------
+    # Access URLs (no domain):
+    # - http://<server-ip>/swagger-ui.html
+    # - http://<server-ip>/v3/api-docs
+    # - http://<server-ip>/v3/api-docs.yaml
+    # - http://<server-ip>/v3/api-docs/web
+    # - http://<server-ip>/v3/api-docs/admin
+    #
+    # Security suggestion (no domain scenario):
+    # - Restrict by IP (allow/deny) OR enable basic auth.
+    location = /swagger-ui.html {
+        proxy_pass http://127.0.0.1:8080;
+        proxy_set_header Authorization $http_authorization;
+
+        # Option: allow internal network only
+        # allow 127.0.0.1;
+        # allow 10.0.0.0/8;
+        # allow 172.16.0.0/12;
+        # allow 192.168.0.0/16;
+        # deny all;
+
+        # Option: basic auth
+        # auth_basic "Swagger";
+        # auth_basic_user_file /etc/nginx/.htpasswd;
+    }
+
+    location ^~ /swagger-ui/ {
+        proxy_pass http://127.0.0.1:8080;
+        proxy_set_header Authorization $http_authorization;
+
+        # Option: same protection as above
+        # auth_basic "Swagger";
+        # auth_basic_user_file /etc/nginx/.htpasswd;
+    }
+
+    location ^~ /v3/api-docs {
+        proxy_pass http://127.0.0.1:8080;
+        proxy_set_header Authorization $http_authorization;
+
+        # Option: same protection as above
+        # auth_basic "Swagger";
+        # auth_basic_user_file /etc/nginx/.htpasswd;
     }
 
     # ---------- uploads mapping ----------

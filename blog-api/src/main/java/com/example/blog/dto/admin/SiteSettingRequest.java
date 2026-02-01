@@ -1,35 +1,46 @@
 package com.example.blog.dto.admin;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 
 public class SiteSettingRequest {
 
+    @Schema(description = "Site name", example = "My Blog")
     @NotBlank
     @Size(max = 100)
     private String siteName;
 
+    @Schema(description = "Site notice (displayed on home/detail pages)", example = "Welcome to my blog")
     @Size(max = 255)
     private String siteNotice;
 
+    @Schema(description = "About page content in Markdown", example = "# About\n\nThis is my blog...")
+    @Size(max = 20000)
     private String aboutContent;
 
-    /** JSON string, e.g. [{"name":"GitHub","url":"https://..."}] */
+    @Schema(description = "Friend links as JSON string, e.g. [{\"name\":\"GitHub\",\"url\":\"https://...\"}]", example = "[{\"name\":\"GitHub\",\"url\":\"https://github.com/xxx\"}]")
+    @Size(max = 2000)
     private String linksJson;
 
+    @Schema(description = "SEO title", example = "My Blog")
     @Size(max = 255)
     private String seoTitle;
 
+    @Schema(description = "SEO keywords", example = "java,vue,spring")
     @Size(max = 255)
     private String seoKeywords;
 
+    @Schema(description = "SEO description", example = "A personal tech blog")
     @Size(max = 255)
     private String seoDescription;
 
+    @Schema(description = "Footer text", example = "Copyright © 2026")
     @Size(max = 255)
     private String footerText;
 
-    /** Homepage full-screen banner image URL (e.g. /uploads/yyyymm/xxx.jpg) */
+    @Schema(description = "Homepage full-screen banner image URL (under /uploads)", example = "/uploads/202602/banner.jpg")
     @Size(max = 255)
     private String bannerUrl;
 

@@ -1,14 +1,19 @@
 package com.example.blog.common;
 
+/**
+ * @deprecated Prefer {@link ErrorCode}.
+ * Kept for backward compatibility with existing code.
+ */
+@Deprecated
 public final class ErrorCodes {
     private ErrorCodes() {}
 
-    public static final int OK = 0;
+    public static final int OK = ErrorCode.OK.getCode();
 
-    public static final int BAD_REQUEST = 40001;
-    public static final int UNAUTHORIZED = 40100;
-    public static final int FORBIDDEN = 40300;
-    public static final int NOT_FOUND = 40400;
+    public static final int BAD_REQUEST = ErrorCode.BAD_REQUEST.getCode();
+    public static final int UNAUTHORIZED = ErrorCode.UNAUTHORIZED.getCode();
+    public static final int FORBIDDEN = ErrorCode.FORBIDDEN.getCode();
+    public static final int NOT_FOUND = ErrorCode.NOT_FOUND.getCode();
 
-    public static final int SYSTEM_ERROR = 50000;
+    public static final int SYSTEM_ERROR = ErrorCode.SYSTEM_ERROR.getCode();
 }

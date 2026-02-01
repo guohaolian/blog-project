@@ -1,11 +1,30 @@
 package com.example.blog.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.Size;
+
 public class PostQuery {
+
+    @Schema(description = "Page number (start from 1)", example = "1")
+    @Min(1)
     private Long pageNum = 1L;
+
+    @Schema(description = "Page size (1~100)", example = "10")
+    @Min(1)
+    @Max(100)
     private Long pageSize = 10L;
 
+    @Schema(description = "Optional keyword for title/summary search", example = "spring")
+    @Size(max = 50)
     private String keyword;
+
+    @Schema(description = "Filter by categoryId", example = "1")
     private Long categoryId;
+
+    @Schema(description = "Filter by tagId", example = "2")
     private Long tagId;
 
     public Long getPageNum() { return pageNum; }

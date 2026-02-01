@@ -1,7 +1,14 @@
 package com.example.blog.vo;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
+@Schema(description = "Category")
 public class CategoryVO {
+
+    @Schema(description = "Category id", example = "1")
     private Long id;
+
+    @Schema(description = "Category name", example = "Java")
     private String name;
 
     public CategoryVO() {}

@@ -24,6 +24,146 @@
 
 ---
 
+## 0.5) Swagger / OpenAPI（上线后怎么访问）
+
+> 默认策略（推荐）：**生产环境默认关闭 Swagger/OpenAPI**。
+>
+> - `dev` 环境：Swagger 默认开启（方便开发调试）
+> - `prod` 环境：Swagger 默认关闭（避免公网暴露）
+>
+> 你如果确实要在生产临时打开：建议只在 Nginx 层加 Basic Auth/IP 白名单后再打开。
+
+### 0.5.1 访问地址（无域名，直接用公网 IP）
+
+- Swagger UI：
+  - `http://你的公网IP/swagger-ui.html`
+
+- OpenAPI（JSON/YAML）：
+  - `http://你的公网IP/v3/api-docs`
+  - `http://你的公网IP/v3/api-docs.yaml`
+
+- 分组文档（你项目已做 web/admin 分组）：
+  - `http://你的公网IP/v3/api-docs/web`
+  - `http://你的公网IP/v3/api-docs/admin`
+
+> 说明：本项目已在 `application.yml` 中配置 `springdoc.swagger-ui.path=/swagger-ui.html`。
+
+### 0.5.2 Nginx 必须放行并反代的路径
+
+你需要在 Nginx 配置中增加以下内容（放到 `server { ... }` 内即可）：
+
+```nginx
+# （推荐）把 swagger/openapi 也反代到后端，否则会 404
+location = /swagger-ui.html {
+    proxy_pass http://127.0.0.1:8080;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+
+    # 关键：转发 Authorization，方便 swagger 的 Authorize 功能携带 JWT
+    proxy_set_header Authorization $http_authorization;
+}
+
+location ^~ /swagger-ui/ {
+    proxy_pass http://127.0.0.1:8080;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_set_header Authorization $http_authorization;
+}
+
+location ^~ /v3/api-docs {
+    proxy_pass http://127.0.0.1:8080;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_set_header Authorization $http_authorization;
+}
+```
+
+### 0.5.3（强烈建议）给 Swagger 加保护（你没有域名时尤其重要）
+
+Swagger 暴露在公网是有风险的。你可以选一种最简单的保护方式：
+
+**方案 A：Basic Auth（最通用）**
+
+```nginx
+# 在 swagger 的 location 块内增加（/swagger-ui.html、/swagger-ui/、/v3/api-docs 都加）
+auth_basic "Swagger";
+auth_basic_user_file /etc/nginx/.htpasswd;
+```
+
+生成账号密码（Ubuntu）：
+
+```bash
+sudo apt update
+sudo apt install -y apache2-utils
+sudo htpasswd -c /etc/nginx/.htpasswd admin
+sudo nginx -t && sudo systemctl reload nginx
+```
+
+**方案 B：IP 白名单（你只在自己网络/内网访问时用）**
+
+```nginx
+# 在 swagger 的 location 块内增加
+allow 127.0.0.1;
+# allow 你的固定公网 IP;   # 例如：allow 1.2.3.4;
+deny all;
+```
+
+> 建议：至少做 Basic Auth（二选一即可）。
+
+### 0.5.0 生产环境默认关闭（重要）
+
+本项目在 `blog-api/src/main/resources/application-prod.yml` 中已设置：
+
+- `springdoc.api-docs.enabled=false`
+- `springdoc.swagger-ui.enabled=false`
+
+因此在生产环境（`--spring.profiles.active=prod`）下，即使你 Nginx 配置了反代：
+- `/swagger-ui.html`
+- `/swagger-ui/**`
+- `/v3/api-docs**`
+
+也会 **返回 404**。
+
+#### 临时开启方式（任选一种）
+
+**方式 A：改服务器上的 prod 配置文件（最直观）**
+
+把外置的 `/opt/blog/blog-api/application-prod.yml` 里改成：
+
+```yaml
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true
+```
+
+然后重启后端：
+
+```bash
+sudo systemctl restart blog-api
+```
+
+**方式 B：启动参数覆盖（不改文件）**
+
+如果你是直接运行 jar，可以在启动命令加：
+
+```bash
+java -jar app.jar --spring.profiles.active=prod \
+  --springdoc.api-docs.enabled=true \
+  --springdoc.swagger-ui.enabled=true
+```
+
+> 建议：开启期间务必配合 Nginx Basic Auth 或 IP 白名单。
+
+---
+
 ## 1) 资源与网络
 
 ### 1.1 ECS 选型建议

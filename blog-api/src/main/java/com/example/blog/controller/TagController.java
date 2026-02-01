@@ -3,6 +3,8 @@ package com.example.blog.controller;
 import com.example.blog.common.ApiResponse;
 import com.example.blog.mapper.TagMapper;
 import com.example.blog.vo.TagVO;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -10,6 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Tag(name = "Web - Tags", description = "Public tags")
 @RestController
 @RequestMapping("/api/tags")
 public class TagController {
@@ -20,6 +23,7 @@ public class TagController {
         this.tagMapper = tagMapper;
     }
 
+    @Operation(summary = "List tags", description = "Returns all tags.")
     @GetMapping
     public ApiResponse<List<TagVO>> list() {
         return ApiResponse.ok(

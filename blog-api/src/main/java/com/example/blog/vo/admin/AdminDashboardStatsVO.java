@@ -1,14 +1,29 @@
 package com.example.blog.vo.admin;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
+@Schema(description = "Dashboard stats")
 public class AdminDashboardStatsVO {
 
+    @Schema(description = "Total posts", example = "10")
     private long total;
+
+    @Schema(description = "Draft posts", example = "2")
     private long draft;
+
+    @Schema(description = "Published posts", example = "8")
     private long published;
 
+    @Schema(description = "Categories count", example = "5")
     private long categories;
+
+    @Schema(description = "Tags count", example = "12")
     private long tags;
+
+    @Schema(description = "Pending comments count", example = "3")
     private long commentsPending;
+
+    @Schema(description = "Total views of all posts", example = "12345")
     private long totalViews;
 
     public AdminDashboardStatsVO() {

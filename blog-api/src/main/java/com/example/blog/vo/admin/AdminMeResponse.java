@@ -1,9 +1,17 @@
 package com.example.blog.vo.admin;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
+@Schema(description = "Current admin profile")
 public class AdminMeResponse {
 
+    @Schema(description = "Admin id", example = "1")
     private Long id;
+
+    @Schema(description = "Username", example = "admin")
     private String username;
+
+    @Schema(description = "Display name", example = "Administrator")
     private String displayName;
 
     public AdminMeResponse() {}

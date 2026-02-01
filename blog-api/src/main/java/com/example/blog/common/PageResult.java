@@ -1,12 +1,22 @@
 package com.example.blog.common;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 import java.util.List;
 
+@Schema(description = "Pagination result wrapper")
 public class PageResult<T> {
 
+    @Schema(description = "Current page list")
     private List<T> list;
+
+    @Schema(description = "Total items count", example = "100")
     private long total;
+
+    @Schema(description = "Current page number", example = "1")
     private long pageNum;
+
+    @Schema(description = "Page size", example = "10")
     private long pageSize;
 
     public PageResult() {

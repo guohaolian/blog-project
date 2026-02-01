@@ -1,12 +1,26 @@
 package com.example.blog.vo.admin;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
+@Schema(description = "Admin user")
 public class AdminUserVO {
 
+    @Schema(description = "Admin id", example = "1")
     private Long id;
+
+    @Schema(description = "Username", example = "admin")
     private String username;
+
+    @Schema(description = "Display name", example = "Administrator")
     private String displayName;
+
+    @Schema(description = "Status: 1=enabled, 0=disabled", example = "1", allowableValues = {"0", "1"})
     private Integer status;
+
+    @Schema(description = "Created time", example = "2026-02-01 12:00:00")
     private String createdAt;
+
+    @Schema(description = "Updated time", example = "2026-02-01 12:00:00")
     private String updatedAt;
 
     public Long getId() {

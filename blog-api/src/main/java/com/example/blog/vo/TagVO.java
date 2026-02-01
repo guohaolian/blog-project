@@ -1,7 +1,14 @@
 package com.example.blog.vo;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
+@Schema(description = "Tag")
 public class TagVO {
+
+    @Schema(description = "Tag id", example = "1")
     private Long id;
+
+    @Schema(description = "Tag name", example = "Spring")
     private String name;
 
     public TagVO() {}

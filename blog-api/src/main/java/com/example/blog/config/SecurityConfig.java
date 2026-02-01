@@ -30,7 +30,17 @@ public class SecurityConfig {
                         .accessDeniedHandler(restAccessDeniedHandler)
                 )
                 .authorizeRequests(auth -> auth
+                        // health
                         .antMatchers("/api/health").permitAll()
+
+                        // swagger / openapi docs
+                        .antMatchers(
+                                "/v3/api-docs/**",
+                                "/swagger-ui.html",
+                                "/swagger-ui/**"
+                        ).permitAll()
+
+                        // admin auth
                         .antMatchers("/api/admin/auth/login").permitAll()
                         .antMatchers("/api/admin/**").hasRole("ADMIN")
                         .anyRequest().permitAll()

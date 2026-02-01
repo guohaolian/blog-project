@@ -11,6 +11,7 @@
 - 本地环境：`docs/dev-setup.md`
 - 数据库初始化：`docs/db-local-setup.md`
 - IDEA 运行配置：`docs/idea-run-config.md`
+- 错误码表（对外契约）：`docs/error-codes.md`
 
 ---
 
@@ -74,6 +75,8 @@ PRD 已明确角色：VISITOR（匿名）+ ADMIN（后台）。v1.0 **不做“�
 - 40300 无权限
 - 40400 不存在
 - 50000 系统错误
+
+> 统一错误码表请以 `docs/error-codes.md` 为准（枚举实现见 `blog-api/src/main/java/com/example/blog/common/ErrorCode.java`）。
 
 ---
 
@@ -222,3 +225,18 @@ ALTER TABLE site_setting
 - 草稿不出现在前台，发布后可查
 - 评论创建默认待审核，审核通过后前台可见
 - 上传返回的 url 可访问（配合 Nginx `/uploads` 映射）
+
+---
+
+## 12. Swagger/OpenAPI（开发 vs 生产）
+
+- dev：Swagger 默认开启（便于联调）
+- prod：Swagger 默认关闭（避免公网暴露）
+
+实现位置：
+- `blog-api/src/main/resources/application.yml`：Swagger UI 路径与分组（web/admin）
+- `blog-api/src/main/resources/application-prod.yml`：`springdoc.*.enabled=false`（默认关闭）
+
+生产临时开启方式见：
+- `docs/api-generated.md`
+- `docs/deploy-ecs-nginx.md`

@@ -1,15 +1,34 @@
 package com.example.blog.vo;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 import java.util.List;
 
+@Schema(description = "Post list item")
 public class PostListItemVO {
+
+    @Schema(description = "Post id", example = "1")
     private Long id;
+
+    @Schema(description = "Post title", example = "Hello World")
     private String title;
+
+    @Schema(description = "Post summary", example = "Short introduction")
     private String summary;
+
+    @Schema(description = "Cover image URL", example = "/uploads/202602/cover.jpg")
     private String coverUrl;
+
+    @Schema(description = "Category")
     private CategoryVO category;
+
+    @Schema(description = "Tags")
     private List<TagVO> tags;
+
+    @Schema(description = "Published time (string)", example = "2026-02-01 12:00:00")
     private String publishedAt;
+
+    @Schema(description = "View count", example = "123")
     private Long viewCount;
 
     public Long getId() { return id; }

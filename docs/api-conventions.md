@@ -56,7 +56,11 @@
   - API 返回 401
   - 前端拦截器捕获后：清 token、跳转登录页
 
-## 5) 错误码建议（最小集合）
+## 5) 错误码建议（统一错误码表）
+
+> 统一错误码表请以 `docs/error-codes.md` 为准（该表是对外契约）。
+
+最小集合（所有端都应支持）：
 
 - `0`：成功
 - `40001`：参数错误
@@ -76,3 +80,12 @@
 - Swagger/OpenAPI：后端自生成
 
 建议：第一阶段用 Apifox + 手工维护；稳定后再补 Swagger。
+
+### Swagger/OpenAPI 的部署建议（安全）
+
+- dev：开启 Swagger UI 方便开发联调
+- prod：建议默认关闭 Swagger/OpenAPI（避免公网暴露），如需临时开启请配合 Nginx Basic Auth 或 IP 白名单
+
+对应实现说明见：
+- `docs/api-generated.md`
+- `docs/deploy-ecs-nginx.md`

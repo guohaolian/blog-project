@@ -1,14 +1,32 @@
 package com.example.blog.vo.admin;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
+@Schema(description = "Admin comment item")
 public class AdminCommentVO {
 
+    @Schema(description = "Comment id", example = "1")
     private Long id;
+
+    @Schema(description = "Post id", example = "1")
     private Long postId;
+
+    @Schema(description = "Post title", example = "Hello World")
     private String postTitle;
+
+    @Schema(description = "Nickname", example = "Tom")
     private String nickname;
+
+    @Schema(description = "Email", example = "tom@example.com")
     private String email;
+
+    @Schema(description = "Content", example = "Nice post!")
     private String content;
+
+    @Schema(description = "Status", example = "PENDING", allowableValues = {"PENDING", "APPROVED", "REJECTED"})
     private String status;
+
+    @Schema(description = "Created time", example = "2026-02-01 12:00:00")
     private String createdAt;
 
     public Long getId() { return id; }
