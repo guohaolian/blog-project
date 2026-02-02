@@ -21,7 +21,8 @@
 - 本地开发环境搭建：`dev-setup.md`
 - 开发路线图(以当前代码为准、状态表见 PRD 第9章)：`roadmap.md`
 
-- 阿里云 ECS 部署（包含：生产环境默认关闭 Swagger，如何临时开启、Nginx BasicAuth/IP 白名单）：`deploy-ecs-nginx.md`
+- 阿里云 ECS 部署（包含：生产环境默认关闭 Swagger，如临时开启、Nginx BasicAuth/IP 白名单）：`deploy-ecs-nginx.md`
+  - 说明：前台/后台路由使用 **Vue Router history 模式** 时，部署到 Nginx 必须配置 **SPA fallback**（例如 `try_files ... /index.html;`，admin 需回退到 `/admin/index.html`），否则“刷新/直达子路由”会 404。对应可直接参考：`../deploy/nginx/blog.conf.example`
 
 ## docs/generated（接口文档生成产物）
 
