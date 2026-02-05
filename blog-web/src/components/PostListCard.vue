@@ -1,35 +1,37 @@
 <template>
-  <el-card class="post-card" :class="{ 'post-card--with-cover': !!post.coverUrl }">
-    <div class="post-card__row">
-      <router-link v-if="post.coverUrl" :to="to" class="post-card__cover">
-        <img :src="post.coverUrl" alt="cover" loading="lazy" />
-      </router-link>
+  <router-link :to="to">
+    <el-card class="post-card" :class="{ 'post-card--with-cover': !!post.coverUrl }">
+      <div class="post-card__row">
+        <router-link v-if="post.coverUrl" :to="to" class="post-card__cover">
+          <img :src="post.coverUrl" alt="cover" loading="lazy" />
+        </router-link>
 
-      <div class="post-card__main">
-        <div class="post-card__titleRow">
-          <router-link :to="to" class="post-card__title">
-            {{ post.title }}
-          </router-link>
+        <div class="post-card__main">
+          <div class="post-card__titleRow">
+            <router-link :to="to" class="post-card__title">
+              {{ post.title }}
+            </router-link>
 
-          <div v-if="showViews" class="post-card__badge">
-            Views: {{ post.viewCount ?? 0 }}
+            <div v-if="showViews" class="post-card__badge">
+              Views: {{ post.viewCount ?? 0 }}
+            </div>
           </div>
-        </div>
 
-        <div class="post-card__meta">
-          <span v-if="post.publishedAt">{{ post.publishedAt }}</span>
-          <span v-if="post.category"> · {{ post.category.name }}</span>
-          <span v-if="showTags && (post.tags?.length || 0) > 0">
+          <div class="post-card__meta">
+            <span v-if="post.publishedAt">{{ post.publishedAt }}</span>
+            <span v-if="post.category"> · {{ post.category.name }}</span>
+            <span v-if="showTags && (post.tags?.length || 0) > 0">
             · Tags: {{ (post.tags || []).map(t => t.name).join(', ') }}
           </span>
+          </div>
+
+          <div v-if="post.summary" class="post-card__summary">{{ post.summary }}</div>
+
+          <slot />
         </div>
-
-        <div v-if="post.summary" class="post-card__summary">{{ post.summary }}</div>
-
-        <slot />
       </div>
-    </div>
-  </el-card>
+    </el-card>
+  </router-link>
 </template>
 
 <script setup lang="ts">
