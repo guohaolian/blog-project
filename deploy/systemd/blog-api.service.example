@@ -7,7 +7,19 @@ After=network.target
 [Service]
 Type=simple
 WorkingDirectory=/opt/blog/blog-api
-ExecStart=/usr/bin/java -jar /opt/blog/blog-api/blog-api.jar --spring.profiles.active=prod
+
+# NOTE (Spring Boot 2.4+):
+# - Do NOT put `spring.profiles.active` inside `application-prod.yml`.
+#   It will fail with: InvalidConfigDataPropertyException (profile specific resource).
+# - Keep profile selection here (or via env): `--spring.profiles.active=prod`
+# - If you ship an external `/opt/blog/blog-api/application-prod.yml`, load it via additional-location.
+# - If you need profile-conditional blocks in the external file, use:
+#     spring:
+#       config:
+#         activate:
+#           on-profile: prod
+ExecStart=/usr/bin/java -jar /opt/blog/blog-api/blog-api.jar --spring.profiles.active=prod --spring.config.additional-location=/opt/blog/blog-api/
+
 Restart=always
 RestartSec=5
 

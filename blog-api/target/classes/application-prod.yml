@@ -1,8 +1,8 @@
 spring:
   application:
     name: blog-api
-  profiles:
-    active: prod
+#  profiles:
+#    active: prod
 
   datasource:
     # MySQL 5.5: use `com.mysql.jdbc.Driver` (mysql-connector-java 5.x)

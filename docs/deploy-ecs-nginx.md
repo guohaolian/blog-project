@@ -451,7 +451,7 @@ docker exec mysql55 sh -c 'mysqldump -uroot -p"ghl200224" blog_db' > $BACKUP_DIR
 
 把你的 `*-exec.jar` 上传后，放到：
 
-- `/opt/blog/blog-api/app.jar`
+- `/opt/blog/blog-api/blog-api.jar`
 
 示例（在服务器上执行）：
 
@@ -547,42 +547,52 @@ cp -r /opt/blog/www/blog-admin-web /opt/blog/backup/blog-admin-web-$TS || true
 
 ## 9) Nginx 配置（单域名 /admin 模式，直接可用）
 
+> ✅ 你当前是“直接用公网 IP 访问（无域名）”的场景：**只使用 Option A（单 server 块）即可**。
+>
+> ⚠️ 不要把示例中的 Option B（双域名 legacy）也一起启用；否则 Nginx 会同时加载多个 `server {}`，
+> 容易导致“命中错误的 server 块”，出现 `/uploads/**` 404 这类难排查问题。
+
 把以下内容保存为：`/etc/nginx/sites-available/blog.conf`。
 
 > 你目前没有域名：保持 `server_name _;` 即可（接收任何 Host），直接用“公网 IP”访问。
-> 如果后续你买了域名，再把 `server_name` 改成你的域名即可。
 
 ```nginx
 server {
-    listen 80;
+    # 无域名（公网 IP 访问）建议设置为默认站点
+    listen 80 default_server;
     server_name _;
+
+    # 解决上传 413（Request Entity Too Large）
+    client_max_body_size 20m;
 
     root /opt/blog/www/blog-web;
     index index.html;
 
-    # proxy headers
     proxy_set_header Host $host;
     proxy_set_header X-Real-IP $remote_addr;
     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
     proxy_set_header X-Forwarded-Proto $scheme;
 
-    # /api -> backend (keep /api prefix)
     location /api/ {
         proxy_pass http://127.0.0.1:8080;
         proxy_http_version 1.1;
         proxy_connect_timeout 5s;
         proxy_read_timeout 60s;
+
+        # 关键：转发 Authorization，后台接口与 Swagger 授权会用到
+        proxy_set_header Authorization $http_authorization;
     }
 
     # /uploads -> disk
-    location /uploads/ {
+    # 注意：使用 alias，并推荐用 ^~ 防止被其他 location（正则/静态资源）抢优先级导致 404
+    location ^~ /uploads/ {
         alias /opt/blog/uploads/;
         autoindex off;
         access_log off;
         try_files $uri =404;
 
-        # 如果你会"删除图片"或"同名覆盖"，建议不要 immutable。
-        add_header Cache-Control "public, max-age=3600";
+        # 缓存策略按需调整（这里给长缓存；如你支持删除/覆盖同名文件，可改短一点）
+        add_header Cache-Control "public, max-age=31536000, immutable";
     }
 
     # admin SPA under /admin/
@@ -590,11 +600,11 @@ server {
         alias /opt/blog/www/blog-admin-web/;
         try_files $uri $uri/ /admin/index.html;
 
-        location ~* \.html$ {
+        location ~* \\.html$ {
             add_header Cache-Control "no-store";
         }
 
-        location ~* \.(js|css|png|jpg|jpeg|gif|svg|ico|webp|woff2?)$ {
+        location ~* \\.(js|css|png|jpg|jpeg|gif|svg|ico|webp|woff2?)$ {
             add_header Cache-Control "public, max-age=31536000, immutable";
             access_log off;
         }
@@ -605,11 +615,11 @@ server {
         try_files $uri $uri/ /index.html;
     }
 
-    location ~* \.html$ {
+    location ~* \\.html$ {
         add_header Cache-Control "no-store";
     }
 
-    location ~* \.(js|css|png|jpg|jpeg|gif|svg|ico|webp|woff2?)$ {
+    location ~* \\.(js|css|png|jpg|jpeg|gif|svg|ico|webp|woff2?)$ {
         add_header Cache-Control "public, max-age=31536000, immutable";
         access_log off;
     }
@@ -620,7 +630,28 @@ server {
 }
 ```
 
-启用配置并重载：
+> 验证与排错：
+> - 配置是否生效：`sudo nginx -T | grep -n "location \^~ /uploads" -n -B2 -A8`
+> - 图片 404：先确认磁盘文件是否存在于 `/opt/blog/uploads/...`，再 `curl -I http://127.0.0.1/uploads/...`
+
+## 9.x 启用配置并重载（前置：Nginx 已安装且在运行）
+
+> 如果你看到：`nginx.service is not active, cannot reload.`
+> 说明 Nginx 服务未启动（或未安装）。先执行下面步骤，再进行 `reload`。
+
+```bash
+# 安装（如已安装可跳过）
+sudo apt update
+sudo apt install -y nginx
+
+# 启动并设置开机自启
+sudo systemctl enable --now nginx
+
+# 确认服务状态
+sudo systemctl status nginx --no-pager
+```
+
+然后再启用配置并重载：
 
 ```bash
 sudo ln -sf /etc/nginx/sites-available/blog.conf /etc/nginx/sites-enabled/blog.conf

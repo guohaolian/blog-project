@@ -198,6 +198,23 @@
 
 ---
 
+## 部署注意：富文本图片 / Banner 预览（/uploads/**）
+
+上传接口返回的图片 URL 为相对路径，例如：`/uploads/202602/xxx.jpg`。
+
+生产环境推荐由 Nginx 直接暴露静态目录（而不是走后端转发），并确保：
+
+- Nginx 配置包含：
+  - `location ^~ /uploads/ { alias /opt/blog/uploads/; try_files $uri =404; }`
+  - `client_max_body_size 20m;`（否则上传可能 413）
+- 浏览器能直接访问：`http://<公网IP>/uploads/...`
+
+如果出现“上传成功但预览 404”，优先检查：
+1) Nginx 是否真的加载了该配置（`nginx -T`）
+2) `/opt/blog/uploads` 下是否存在对应文件
+
+---
+
 ## 11. 前端自测重点
 
 对照 `docs/acceptance-checklist.md`：
