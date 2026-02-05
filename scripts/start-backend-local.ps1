@@ -23,7 +23,7 @@ if (-not (Test-Path $jarPath)) {
 Write-Host "[blog-api] Starting on port $Port (profile=local)..." -ForegroundColor Cyan
 Write-Host "[blog-api] Health check: http://127.0.0.1:$Port/api/health" -ForegroundColor Gray
 
-Start-Process -FilePath "java" -ArgumentList @(
+Start-Process -FilePath "java" -WorkingDirectory $apiDir -ArgumentList @(
   "-jar",
   $jarPath,
   "--spring.profiles.active=local",

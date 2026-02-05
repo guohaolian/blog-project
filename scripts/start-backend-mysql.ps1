@@ -49,7 +49,7 @@ if ($DbPassword -ne '') { $javaArgs += "--spring.datasource.password=$DbPassword
 Write-Host "[blog-api] Starting on port $Port (profile=$Profile)..." -ForegroundColor Cyan
 Write-Host "[blog-api] Health check: http://127.0.0.1:$Port/api/health" -ForegroundColor Gray
 
-Start-Process -FilePath "java" -ArgumentList $javaArgs -NoNewWindow
+Start-Process -FilePath "java" -WorkingDirectory $apiDir -ArgumentList $javaArgs -NoNewWindow
 
 Write-Host "[blog-api] Started (background)." -ForegroundColor Green
 Write-Host "[blog-api] Tip: stop with scripts/stop-port.ps1 -Port $Port" -ForegroundColor Gray

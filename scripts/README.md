@@ -74,11 +74,11 @@
 ## 4) 一键启动/停止三端
 
 ```powershell
-.\scripts\start-all.ps1 -ApiPort 18080
+.\scripts\start-all.ps1 -ApiPort 8080
 ```
 
 ```powershell
-.\scripts\stop-all.ps1 -ApiPort 18080
+.\scripts\stop-all.ps1 -ApiPort 8080
 ```
 
 > 说明：

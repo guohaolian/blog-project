@@ -80,24 +80,24 @@ blog-project/
 
 > 所有命令默认在项目根目录执行（`E:\blog-project`）。
 
-### 5.1 一键启动（后端 local profile + 前台 + 管理端）
+### 5.1 一键启动（后端使用MySQL + 前台 + 管理端）
 
 适合：你刚拉代码，想先确认“前后端都能跑起来”（**不依赖 MySQL**）。
 
 ```powershell
-.\scripts\start-all.ps1 -ApiPort 18080
+.\scripts\start-all.ps1 -ApiPort 8080
 ```
 
 停止：
 
 ```powershell
-.\scripts\stop-all.ps1 -ApiPort 18080
+.\scripts\stop-all.ps1 -ApiPort 8080
 ```
 
 后端探活：
 
 ```powershell
-.\scripts\healthcheck.ps1 -ApiPort 18080
+.\scripts\healthcheck.ps1 -ApiPort 8080
 ```
 
 ### 5.2 启动后端（连接 MySQL：dev/prod profile）

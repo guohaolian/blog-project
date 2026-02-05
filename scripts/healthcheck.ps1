@@ -1,5 +1,5 @@
 param(
-  [int]$ApiPort = 18080
+  [int]$ApiPort = 8080
 )
 
 $ErrorActionPreference = 'Stop'

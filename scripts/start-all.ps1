@@ -1,5 +1,5 @@
 param(
-  [int]$ApiPort = 18080,
+  [int]$ApiPort = 8080,
   [switch]$NoFrontend
 )
 
@@ -18,7 +18,7 @@ $pids = [ordered]@{
 
 Write-Host "== Start blog-api (local) ==" -ForegroundColor Cyan
 # start-backend-local.ps1 will build + start the jar.
-& (Join-Path $projectRoot 'scripts\start-backend-local.ps1') -Port $ApiPort
+& (Join-Path $projectRoot 'scripts\start-backend-mysql.ps1') -Port $ApiPort
 
 # Find PID by port (best-effort). If api fails to bind, this stays null.
 $line = (netstat -ano | findstr ":$ApiPort" | findstr "LISTENING" | Select-Object -First 1)
