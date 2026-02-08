@@ -55,7 +55,7 @@
             </el-descriptions-item>
           </el-descriptions>
 
-          <div v-if="statsError" style="margin-top: 8px; color: var(--el-color-danger)">
+          <div v-if="statsError" style="margin-top: 8px; color: #F56C6C">
             {{ statsError }}
             <div style="margin-top: 8px">
               <el-button size="small" type="primary" @click="router.push('/admin/posts')">Go to Posts</el-button>
@@ -92,7 +92,7 @@
                     >
                       {{ row.title || '(Untitled)' }}
                     </el-link>
-                    <div style="margin-top: 4px; font-size: 12px; color: var(--el-text-color-secondary)">
+                    <div style="margin-top: 4px; font-size: 12px; color: #909399">
                       <span>{{ row.status }}</span>
                       <span v-if="row.updatedAt"> · {{ row.updatedAt }}</span>
                     </div>
@@ -103,7 +103,7 @@
             </el-table-column>
           </el-table>
 
-          <div v-if="recentError" style="margin-top: 8px; color: var(--el-color-danger)">
+          <div v-if="recentError" style="margin-top: 8px; color: #F56C6C">
             {{ recentError }}
           </div>
         </el-card>
@@ -121,8 +121,52 @@
         <el-card shadow="hover" style="margin-bottom: 12px">
           <template #header>Account</template>
           <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px">
-            <span style="color: var(--el-text-color-regular)">Logout current session</span>
+            <span style="color: #606266">Logout current session</span>
             <el-button type="danger" @click="logout">Logout</el-button>
+          </div>
+        </el-card>
+      </el-col>
+    </el-row>
+
+    <el-row :gutter="12" style="margin-top: 12px">
+      <el-col :xs="24" :md="12">
+        <el-card shadow="hover" style="margin-bottom: 12px" v-loading="statsLoading">
+          <template #header>
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px">
+              <span>Posts status</span>
+              <el-button size="small" :loading="statsLoading" @click="loadStats">Refresh</el-button>
+            </div>
+          </template>
+
+          <ECharts :option="postStatusOption" :loading="statsLoading" height="300px" />
+        </el-card>
+      </el-col>
+
+      <el-col :xs="24" :md="12">
+        <el-card shadow="hover" style="margin-bottom: 12px" v-loading="statsLoading">
+          <template #header>
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px">
+              <span>Content structure</span>
+              <el-button size="small" :loading="statsLoading" @click="loadStats">Refresh</el-button>
+            </div>
+          </template>
+
+          <ECharts :option="contentStructureOption" :loading="statsLoading" height="300px" />
+        </el-card>
+      </el-col>
+
+      <el-col :xs="24">
+        <el-card shadow="hover" style="margin-bottom: 12px" v-loading="statsLoading">
+          <template #header>
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px">
+              <span>KPI overview</span>
+              <el-button size="small" :loading="statsLoading" @click="loadStats">Refresh</el-button>
+            </div>
+          </template>
+
+          <ECharts :option="kpiOption" :loading="statsLoading" height="280px" />
+          <div style="margin-top: 6px; font-size: 12px; color: #909399">
+            Tips: These metrics have different units; the chart is for a quick snapshot.
           </div>
         </el-card>
       </el-col>
@@ -131,12 +175,14 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import { adminPostPage } from '../api/posts'
 import type { AdminPostListItemVO } from '../api/posts'
 import { adminDashboardStats } from '../api/dashboard'
+import ECharts from '../components/charts/ECharts.vue'
+import type { EChartsOption } from 'echarts'
 
 const router = useRouter()
 const auth = useAuthStore()
@@ -204,5 +250,99 @@ function logout() {
 
 onMounted(async () => {
   await Promise.all([loadStats(), loadRecent()])
+})
+
+const postStatusOption = computed<EChartsOption>(() => {
+  const draft = stats.draft || 0
+  const published = stats.published || 0
+  const total = draft + published
+  return {
+    tooltip: { trigger: 'item' },
+    legend: { bottom: 0 },
+    graphic: [
+      {
+        type: 'text',
+        left: 'center',
+        top: '42%',
+        style: {
+          text: 'Total',
+          textAlign: 'center',
+          fill: '#909399',
+          fontSize: 12,
+          fontWeight: 500,
+        },
+      },
+      {
+        type: 'text',
+        left: 'center',
+        top: '50%',
+        style: {
+          text: String(total),
+          textAlign: 'center',
+          fill: '#303133',
+          fontSize: 22,
+          fontWeight: 700,
+        },
+      },
+    ],
+    series: [
+      {
+        name: 'Posts',
+        type: 'pie',
+        radius: ['45%', '70%'],
+        avoidLabelOverlap: true,
+        label: { formatter: '{b}: {c} ({d}%)' },
+        data: [
+          { value: published, name: 'Published' },
+          { value: draft, name: 'Draft' },
+        ],
+      },
+    ],
+  }
+})
+
+const contentStructureOption = computed<EChartsOption>(() => {
+  const categories = stats.categories || 0
+  const tags = stats.tags || 0
+  return {
+    tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+    grid: { left: 24, right: 24, top: 20, bottom: 24, containLabel: true },
+    xAxis: { type: 'value', minInterval: 1 },
+    yAxis: { type: 'category', data: ['Categories', 'Tags'] },
+    series: [
+      {
+        type: 'bar',
+        data: [categories, tags],
+        barWidth: 18,
+        itemStyle: { borderRadius: [0, 6, 6, 0] },
+      },
+    ],
+  }
+})
+
+const kpiOption = computed<EChartsOption>(() => {
+  const totalPosts = stats.total || 0
+  const totalViews = stats.totalViews || 0
+  const pending = stats.commentsPending || 0
+
+  return {
+    tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+    grid: { left: 24, right: 24, top: 20, bottom: 24, containLabel: true },
+    xAxis: {
+      type: 'category',
+      data: ['Posts', 'Views', 'Pending comments'],
+      axisLabel: { interval: 0 },
+    },
+    yAxis: { type: 'value', minInterval: 1 },
+    series: [
+      {
+        name: 'Count',
+        type: 'bar',
+        data: [totalPosts, totalViews, pending],
+        barMaxWidth: 36,
+        itemStyle: { borderRadius: [6, 6, 0, 0] },
+      },
+    ],
+  }
 })
 </script>
