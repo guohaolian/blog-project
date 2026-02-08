@@ -14,7 +14,7 @@ const ResourcesView = () => import('../views/ResourcesView.vue')
 const AdminsView = () => import('../views/AdminsView.vue')
 
 export const router = createRouter({
-  history: createWebHistory(),
+  history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     { path: '/', redirect: '/admin' },
     {

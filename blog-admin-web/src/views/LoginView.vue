@@ -1,51 +1,83 @@
 <template>
-  <div style="max-width: 360px; margin: 80px auto; padding: 16px">
-    <h2 style="margin-bottom: 16px">Admin Login</h2>
+  <div class="login-page">
+    <div class="login-bg" aria-hidden="true" />
+    <div class="login-bg-grid" aria-hidden="true" />
+    <div class="login-bg-noise" aria-hidden="true" />
 
-    <el-form ref="formRef" :model="form" :rules="rules" @submit.prevent>
-      <el-form-item label="Username" prop="username">
-        <el-input
-          v-model="form.username"
-          autocomplete="username"
-          @keyup.enter="handleLogin"
-        />
-      </el-form-item>
+    <div class="login-card" role="main">
+      <div class="login-brand">
+        <div class="login-title">Blog Admin</div>
+        <div class="login-subtitle">Sign in to continue</div>
+      </div>
 
-      <el-form-item label="Password" prop="password">
-        <el-input
-          v-model="form.password"
-          type="password"
-          autocomplete="current-password"
-          show-password
-          @keyup.enter="handleLogin"
-        />
-      </el-form-item>
+      <el-form
+        ref="formRef"
+        class="login-form"
+        :model="form"
+        :rules="rules"
+        label-position="top"
+        @submit.prevent
+      >
+        <el-form-item label="Username" prop="username">
+          <el-input
+            ref="usernameInputRef"
+            v-model="form.username"
+            size="large"
+            autocomplete="username"
+            @keyup.enter="handleLogin"
+          />
+        </el-form-item>
 
-      <el-form-item>
-        <el-button type="primary" :loading="loading" @click="handleLogin">Login</el-button>
-      </el-form-item>
+        <el-form-item label="Password" prop="password">
+          <el-input
+            v-model="form.password"
+            size="large"
+            type="password"
+            autocomplete="current-password"
+            show-password
+            @keyup.enter="handleLogin"
+          />
+        </el-form-item>
 
-      <el-alert
-        v-if="errorMsg"
-        type="error"
-        :title="errorMsg"
-        show-icon
-        :closable="false"
-      />
+        <div class="login-messages">
+          <el-alert
+            v-if="errorMsg"
+            type="error"
+            :title="errorMsg"
+            show-icon
+            :closable="false"
+          />
 
-      <el-alert
-        style="margin-top: 12px"
-        type="info"
-        title="Default seed account: admin / admin123"
-        show-icon
-        :closable="false"
-      />
-    </el-form>
+          <el-alert
+            v-if="showSeedHint"
+            class="login-hint"
+            type="info"
+            title="Default seed account: admin / admin123"
+            show-icon
+            :closable="false"
+          />
+        </div>
+
+        <el-button
+          class="login-submit"
+          type="primary"
+          size="large"
+          :loading="loading"
+          @click="handleLogin"
+        >
+          Login
+        </el-button>
+      </el-form>
+
+      <div class="login-footer">
+        <span>© {{ new Date().getFullYear() }} Blog</span>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { reactive, ref } from 'vue'
+import { reactive, ref, nextTick, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import type { FormInstance, FormRules } from 'element-plus'
 import { useAuthStore } from '../stores/auth'
@@ -68,6 +100,13 @@ const rules: FormRules = {
 
 const loading = ref(false)
 const errorMsg = ref('')
+
+const usernameInputRef = ref<{ focus?: () => void }>()
+
+onMounted(async () => {
+  await nextTick()
+  usernameInputRef.value?.focus?.()
+})
 
 async function handleLogin() {
   errorMsg.value = ''
@@ -94,4 +133,120 @@ async function handleLogin() {
     loading.value = false
   }
 }
+
+const showSeedHint = import.meta.env.DEV
 </script>
+
+<style scoped>
+.login-page {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  position: relative;
+  overflow: hidden;
+}
+
+.login-bg {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(1100px 680px at 18% 18%, rgba(79, 70, 229, 0.26), transparent 58%),
+    radial-gradient(900px 560px at 86% 30%, rgba(99, 102, 241, 0.18), transparent 62%),
+    radial-gradient(900px 700px at 55% 115%, rgba(14, 165, 233, 0.10), transparent 55%),
+    linear-gradient(180deg, var(--admin-bg-0), var(--admin-bg-1));
+}
+
+/* subtle grid to add depth (very light) */
+.login-bg-grid {
+  position: absolute;
+  inset: 0;
+  opacity: 0.45;
+  background-image:
+    linear-gradient(to right, rgba(15, 23, 42, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(15, 23, 42, 0.05) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(900px 520px at 50% 35%, #000 60%, transparent 100%);
+  pointer-events: none;
+}
+
+/* tiny noise overlay to avoid banding and make it more premium */
+.login-bg-noise {
+  position: absolute;
+  inset: 0;
+  opacity: 0.06;
+  background-image: url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22120%22 height=%22120%22 viewBox=%220 0 120 120%22%3E%3Cfilter id=%22n%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.9%22 numOctaves=%222%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22120%25%22 height=%22120%25%22 filter=%22url(%23n)%22 opacity=%221%22/%3E%3C/svg%3E');
+  pointer-events: none;
+}
+
+.login-card {
+  position: relative;
+  width: 100%;
+  max-width: 420px;
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius);
+  box-shadow: var(--admin-shadow);
+  backdrop-filter: blur(10px);
+  padding: 30px;
+}
+
+/* soft glow behind the card */
+.login-card::before {
+  content: '';
+  position: absolute;
+  inset: -22px;
+  border-radius: calc(var(--admin-radius) + 18px);
+  background: radial-gradient(420px 260px at 30% 20%, rgba(79, 70, 229, 0.22), transparent 60%);
+  filter: blur(10px);
+  opacity: 0.9;
+  z-index: -1;
+}
+
+.login-brand {
+  text-align: left;
+  margin-bottom: 18px;
+}
+
+.login-title {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  color: var(--admin-text);
+}
+
+.login-subtitle {
+  margin-top: 6px;
+  font-size: 13px;
+  color: var(--admin-muted);
+}
+
+.login-form {
+  margin-top: 12px;
+}
+
+.login-messages {
+  display: grid;
+  gap: 10px;
+  margin: 6px 0 14px;
+}
+
+.login-hint {
+  opacity: 0.92;
+}
+
+.login-hint :deep(.el-alert__description) {
+  color: var(--admin-muted);
+}
+
+.login-submit {
+  width: 100%;
+}
+
+.login-footer {
+  margin-top: 16px;
+  font-size: 12px;
+  color: var(--admin-muted);
+  text-align: center;
+}
+</style>
