@@ -37,6 +37,7 @@
   - `generated/api-docs.web.html`
   - `generated/api-docs.admin.html`
   - `generated/api-docs.md`
+  - `generated/api-docs.html`
 
 ## deploy 目录（可直接复用）
 - MySQL 初始化 SQL：`../deploy/sql/init.sql`
@@ -44,3 +45,5 @@
 - systemd 服务模板：`../deploy/systemd/blog-api.service.example`
 
 - OpenAPI (implemented, source of truth): `openapi-implemented.md`
+
+- Dashboard 图表（Admin，ECharts 实现说明）：见 `frontend-dev-guide.md` 的 7.3 节

@@ -143,6 +143,75 @@
 - 已登录访问 `/login`：跳转 `/dashboard`
 - 刷新后：如 token 存在但 me 为空 → 调用 `/api/admin/auth/me`
 
+### 7.3 Dashboard（Admin）图表（ECharts）
+
+> 位置：`blog-admin-web/src/views/AdminHomeView.vue`
+>
+> 目的：把 dashboard 的关键指标用图表可视化，并支持“点击图表跳转到对应管理页面”。
+
+#### 7.3.1 图表库与通用组件
+
+- 依赖：`blog-admin-web/package.json` 已包含 `echarts`
+- 通用组件：`blog-admin-web/src/components/charts/ECharts.vue`
+  - Props：
+    - `option: EChartsOption`：ECharts 配置
+    - `height?: string`：容器高度（默认 `280px`）
+    - `loading?: boolean`：loading 状态（会 show/hideLoading）
+    - `onClick?: (params) => void`：点击事件回调（用于页面跳转）
+  - 特性：
+    - 自动 init / dispose
+    - `ResizeObserver` + window resize 自适应
+    - option 深度 watch，调用 `setOption(..., { notMerge: true })`
+
+> 约定：尽量复用该组件，不要在每个页面重复写 init/dispose/resize 逻辑。
+
+#### 7.3.2 当前 Dashboard 图表（基于 stats 接口）
+
+数据来源：`GET /api/admin/dashboard/stats`（前端封装：`blog-admin-web/src/api/dashboard.ts`）
+
+当前图表：
+1) Posts status（环形饼图）
+   - 维度：`draft` vs `published`
+   - 中心显示：总数（`draft + published`）
+2) Content structure（横向条形图）
+   - 维度：`categories` vs `tags`
+3) KPI overview（柱状图）
+   - 维度：`total` / `totalViews` / `commentsPending`
+   - 说明：不同量纲，仅作快照展示
+
+#### 7.3.3 图表点击跳转（交互约定）
+
+在 `AdminHomeView.vue` 中通过 `:on-click="..."` 绑定处理函数，实现“点击跳转到对应页面”：
+
+- Posts status（饼图）
+  - Draft → `/admin/posts?status=DRAFT`
+  - Published → `/admin/posts?status=PUBLISHED`
+- Content structure（条形图）
+  - Categories → `/admin/categories`
+  - Tags → `/admin/tags`
+- KPI overview（柱状图）
+  - Posts → `/admin/posts`
+  - Pending comments → `/admin/comments?status=PENDING`
+  - Views：当前无独立页面，暂兜底跳转到 `/admin/posts`
+
+> 约定：跳转尽量复用已有的跳转函数（例如 `goPosts()` / `goComments()`），避免散落硬编码。
+
+#### 7.3.4 Dashboard 布局对齐（样式约定）
+
+为了让同一行卡片视觉对齐，`AdminHomeView.vue` 使用：
+- `el-row align="stretch"`
+- 让 `el-col` 作为 flex 容器，内部 `el-card` `width: 100%` 以拉伸对齐
+
+> 约定：优先用局部 `scoped` 样式，不要影响全局 Element Plus 样式。
+
+#### 7.3.5 后续扩展：趋势类图表
+
+现有 `/dashboard/stats` 仅提供汇总数。要做折线/面积等趋势图，建议新增接口：
+- `GET /api/admin/dashboard/trends?days=7|30`
+- 返回时间序列（例如按天统计发布数/浏览量等）
+
+前端建议：新增 `src/api/dashboard.ts` 方法 + 在 Dashboard 增加折线/面积图卡片。
+
 ---
 
 ## 8. MVP 里程碑（前端拆分建议）

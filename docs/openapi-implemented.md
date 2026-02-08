@@ -298,11 +298,12 @@ Query：
 
 ```json
 {
-  "draftCount": 0,
-  "publishedCount": 0,
-  "categoriesCount": 0,
-  "tagsCount": 0,
-  "commentsPendingCount": 0,
+  "total": 0,
+  "draft": 0,
+  "published": 0,
+  "categories": 0,
+  "tags": 0,
+  "commentsPending": 0,
   "totalViews": 0
 }
 ```
