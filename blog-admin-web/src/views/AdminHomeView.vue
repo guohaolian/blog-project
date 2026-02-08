@@ -1,13 +1,13 @@
 <template>
-  <div style="padding: 16px">
-    <h2 style="margin: 0 0 12px">Dashboard</h2>
+  <div class="admin-dashboard">
+    <h2 class="admin-dashboard__title">Dashboard</h2>
 
-    <p v-if="auth.user" style="margin: 0 0 16px">
+    <p v-if="auth.user" class="admin-dashboard__welcome">
       Welcome, {{ auth.user.displayName || auth.user.username }}.
     </p>
-    <p v-else style="margin: 0 0 16px">You're logged in.</p>
+    <p v-else class="admin-dashboard__welcome">You're logged in.</p>
 
-    <el-row :gutter="12">
+    <el-row :gutter="12" class="admin-dashboard__row" align="stretch">
       <el-col :xs="24" :sm="12" :md="8">
         <el-card shadow="hover" style="margin-bottom: 12px" v-loading="statsLoading">
           <template #header>
@@ -128,7 +128,7 @@
       </el-col>
     </el-row>
 
-    <el-row :gutter="12" style="margin-top: 12px">
+    <el-row :gutter="12" class="admin-dashboard__row" align="stretch">
       <el-col :xs="24" :md="12">
         <el-card shadow="hover" style="margin-bottom: 12px" v-loading="statsLoading">
           <template #header>
@@ -138,7 +138,7 @@
             </div>
           </template>
 
-          <ECharts :option="postStatusOption" :loading="statsLoading" height="300px" />
+          <ECharts :option="postStatusOption" :loading="statsLoading" height="300px" :on-click="handlePostStatusClick" />
         </el-card>
       </el-col>
 
@@ -151,7 +151,12 @@
             </div>
           </template>
 
-          <ECharts :option="contentStructureOption" :loading="statsLoading" height="300px" />
+          <ECharts
+            :option="contentStructureOption"
+            :loading="statsLoading"
+            height="300px"
+            :on-click="handleContentStructureClick"
+          />
         </el-card>
       </el-col>
 
@@ -164,7 +169,7 @@
             </div>
           </template>
 
-          <ECharts :option="kpiOption" :loading="statsLoading" height="280px" />
+          <ECharts :option="kpiOption" :loading="statsLoading" height="280px" :on-click="handleKpiClick" />
           <div style="margin-top: 6px; font-size: 12px; color: #909399">
             Tips: These metrics have different units; the chart is for a quick snapshot.
           </div>
@@ -183,6 +188,7 @@ import type { AdminPostListItemVO } from '../api/posts'
 import { adminDashboardStats } from '../api/dashboard'
 import ECharts from '../components/charts/ECharts.vue'
 import type { EChartsOption } from 'echarts'
+import type { ECElementEvent } from 'echarts/core'
 
 const router = useRouter()
 const auth = useAuthStore()
@@ -345,4 +351,87 @@ const kpiOption = computed<EChartsOption>(() => {
     ],
   }
 })
+
+function handlePostStatusClick(params: ECElementEvent) {
+  const name = String((params as any)?.name || '')
+  if (name === 'Draft') {
+    goPosts('DRAFT')
+    return
+  }
+  if (name === 'Published') {
+    goPosts('PUBLISHED')
+  }
+}
+
+function handleContentStructureClick(params: ECElementEvent) {
+  const name = String((params as any)?.name || '')
+  if (name === 'Categories') {
+    router.push('/admin/categories')
+    return
+  }
+  if (name === 'Tags') {
+    router.push('/admin/tags')
+  }
+}
+
+function handleKpiClick(params: ECElementEvent) {
+  const name = String((params as any)?.name || '')
+  // For bar series, name is usually the category name
+  if (name === 'Posts') {
+    router.push('/admin/posts')
+    return
+  }
+  if (name === 'Views') {
+    // no dedicated views page yet; fallback to posts list
+    router.push('/admin/posts')
+    return
+  }
+  if (name === 'Pending comments') {
+    goComments()
+  }
+}
 </script>
+
+<style scoped>
+.admin-dashboard {
+  padding: 16px;
+}
+
+.admin-dashboard__title {
+  margin: 0 0 12px;
+}
+
+.admin-dashboard__welcome {
+  margin: 0 0 16px;
+}
+
+.admin-dashboard__row {
+  margin-top: 12px;
+}
+
+.admin-dashboard__row:first-of-type {
+  margin-top: 0;
+}
+
+/* 让同一行内的列高度一致（Element Plus el-row 默认是 flex） */
+.admin-dashboard :deep(.el-col) {
+  display: flex;
+}
+
+.admin-dashboard :deep(.el-card) {
+  width: 100%;
+}
+
+/* 卡片 header 统一左右对齐 */
+.admin-dashboard :deep(.el-card__header) {
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+/* 轻微压缩卡片内容空白，减少错位感 */
+.admin-dashboard :deep(.el-card__body) {
+  padding-top: 12px;
+  padding-bottom: 12px;
+}
+</style>
+

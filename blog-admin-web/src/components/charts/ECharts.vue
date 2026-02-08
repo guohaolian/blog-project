@@ -6,16 +6,19 @@
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import * as echarts from 'echarts'
 import type { EChartsOption } from 'echarts'
+import type { ECElementEvent } from 'echarts/core'
 
 const props = withDefaults(
   defineProps<{
     option: EChartsOption
     height?: string
     loading?: boolean
+    onClick?: (params: ECElementEvent) => void
   }>(),
   {
     height: '280px',
     loading: false,
+    onClick: undefined,
   },
 )
 
@@ -23,6 +26,7 @@ const elRef = ref<HTMLDivElement | null>(null)
 let chart: echarts.ECharts | null = null
 let ro: ResizeObserver | null = null
 let onWindowResize: (() => void) | null = null
+let onChartClick: ((params: ECElementEvent) => void) | null = null
 
 function render() {
   if (!chart) return
@@ -36,6 +40,11 @@ onMounted(() => {
   chart = echarts.init(elRef.value)
   render()
 
+  if (props.onClick) {
+    onChartClick = ((params: any) => props.onClick?.(params)) as unknown as (params: any) => void
+    chart.on('click', onChartClick as any)
+  }
+
   ro = new ResizeObserver(() => {
     chart?.resize()
   })
@@ -46,6 +55,9 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
+  if (onChartClick) chart?.off('click', onChartClick as any)
+  onChartClick = null
+
   if (onWindowResize) window.removeEventListener('resize', onWindowResize)
   onWindowResize = null
   ro?.disconnect()
