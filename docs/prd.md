@@ -108,20 +108,20 @@
 - `/archives` 归档
 - `/about` 关于
 - `/links` 友链
-- `/*` 404
+- `/:pathMatch(.*)*` 404
 
 ### 4.2 后台页面（`blog-admin-web`）
 - `/login` 登录
-- `/dashboard` 仪表盘
-- `/posts` 文章列表
-- `/posts/new` 新建文章
-- `/posts/:id/edit` 编辑文章
-- `/categories` 分类管理
-- `/tags` 标签管理
-- `/comments` 评论管理（审核）
-- `/resources` 资源管理
-- `/settings` 站点设置
-- `/admins` 管理员管理（如启用）
+- `/admin` 仪表盘
+- `/admin/posts` 文章列表
+- `/admin/posts/new` 新建文章
+- `/admin/posts/:id/edit` 编辑文章
+- `/admin/categories` 分类管理
+- `/admin/tags` 标签管理
+- `/admin/comments` 评论管理（审核）
+- `/admin/resources` 资源管理
+- `/admin/settings` 站点设置
+- `/admin/admins` 管理员管理（如启用）
 
 ---
 
@@ -131,8 +131,9 @@
 
 ### 5.1 认证（Admin）
 - `POST /api/admin/auth/login` 登录
-- `POST /api/admin/auth/logout` 退出（可选）
 - `GET  /api/admin/auth/me` 当前管理员信息
+
+> 说明：v1.0 不提供后端 logout 接口；前端退出登录通过清理本地 token 实现。
 
 ### 5.2 文章（Admin）
 - `GET  /api/admin/posts` 分页列表（支持 status/keyword/categoryId/tagId）
@@ -165,9 +166,10 @@
 ### 5.7 前台公开接口（Web）
 - `GET /api/posts` 已发布文章分页（支持 categoryId/tagId/keyword）
 - `GET /api/posts/{id}` 已发布文章详情（含阅读量）
+- `GET /api/posts/hot` 热门文章（按阅读量）
 - `GET /api/categories` 分类列表
 - `GET /api/tags` 标签列表
-- `GET /api/archives` 归档
+- `GET /api/posts/archives` 归档
 - `GET /api/site` 站点设置
 - `GET /api/posts/{id}/comments` 评论列表（仅已审核）
 - `POST /api/posts/{id}/comments` 新增评论（匿名）
@@ -232,17 +234,17 @@
 
 | 需求点 | 状态 | 备注（实现入口/说明） |
 |---|---|---|
-| 管理员登录/退出 | ✅ 已实现 | `/login` + token + 路由守卫 |
-| 仪表盘统计 | ✅ 已实现 | `/dashboard` |
-| 文章管理（列表/编辑/发布/撤回/删除） | ✅ 已实现 | `/posts` / `/posts/:id/edit` |
-| 分类管理 CRUD | ✅ 已实现 | `/categories` |
-| 标签管理 CRUD | ✅ 已实现 | `/tags` |
-| 评论管理（列表/审核/删除） | ✅ 已实现 | `/comments` |
+| 管理员登录/退出 | ✅ 已实现 | `/login` + token + 路由守卫（`/` 重定向 `/admin`） |
+| 仪表盘统计 | ✅ 已实现 | `/admin` |
+| 文章管理（列表/编辑/发布/撤回/删除） | ✅ 已实现 | `/admin/posts` / `/admin/posts/:id/edit` |
+| 分类管理 CRUD | ✅ 已实现 | `/admin/categories` |
+| 标签管理 CRUD | ✅ 已实现 | `/admin/tags` |
+| 评论管理（列表/审核/删除） | ✅ 已实现 | `/admin/comments` |
 | 上传（封面/正文图片） | ✅ 已实现 | 上传接口：`/api/admin/upload/image` |
-| 资源管理（列表/删除） | ✅ 已实现 | `/resources`（file_resource 落库） |
-| 站点设置（站点名、公告、关于、SEO、页脚） | ✅ 已实现 | `/settings` |
-| 站点设置：首页 Banner 上传与配置 | ✅ 已实现（P1） | `/settings` 上传后保存到 `bannerUrl` |
-| 管理员管理（新增/重置密码/状态） | ✅ 已实现 | `/admins` |
+| 资源管理（列表/删除） | ✅ 已实现 | `/admin/resources`（file_resource 落库） |
+| 站点设置（站点名、公告、关于、SEO、页脚） | ✅ 已实现 | `/admin/settings` |
+| 站点设置：首页 Banner 上传与配置 | ✅ 已实现（P1） | `/admin/settings` 上传后保存到 `bannerUrl` |
+| 管理员管理（新增/重置密码/状态） | ✅ 已实现 | `/admin/admins` |
 
 ### 9.3 后端（blog-api）
 
@@ -259,6 +261,6 @@
 
 ### 9.4 可延后项（v1.x）
 
-- 暗色模式自动切换：🟡 可选（按时间自动切换可后续加强）
+- 暗色模式：✅ 已实现（blog-web + blog-admin-web 均支持 Light/Dark/Auto；Auto 为按时间窗切换）
 - 图片懒加载：🟡 可选
 - RSS：🟡 可选

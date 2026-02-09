@@ -37,6 +37,7 @@
 - `src/stores/`
   - `auth.ts`（仅后台需要）
   - `site.ts`
+  - `theme.ts`（暗黑模式，仅 UI 状态，但两端均可复用模式）
 - `src/router/`
   - `index.ts`
   - `guards.ts`（仅后台需要）
@@ -71,9 +72,74 @@
 
 ---
 
-## 4. 联调方式（开发/生产）
+## 4. 暗黑模式（后台 `blog-admin-web`，含登录页）
 
-### 4.1 开发环境（推荐）
+> 目标：后台所有页面（包括 `/login`）支持 Light/Dark/Auto 切换，并与 Element Plus 的暗黑变量联动。
+
+### 4.1 实现要点（Element Plus）
+
+- Element Plus 的暗黑模式是通过 **给 `<html>` 加 `dark` class** 来启用的。
+- 入口需要引入 Element Plus 暗黑变量文件：
+  - `blog-admin-web/src/main.ts`：
+    - `import 'element-plus/theme-chalk/dark/css-vars.css'`
+
+### 4.2 Theme Store（Pinia）
+
+位置：`blog-admin-web/src/stores/theme.ts`
+
+约定：
+- `mode: 'light' | 'dark' | 'auto'`
+- `resolvedMode`：当 `mode==='auto'` 时，根据时间窗口决定最终模式
+- 本地存储：
+  - `localStorage['blog-admin-web:theme']`
+  - `localStorage['blog-admin-web:theme:auto-window']`
+- 关键动作：
+  - `applyToDom()`：
+    - `document.documentElement.classList.toggle('dark', resolvedMode === 'dark')`
+    - `document.documentElement.style.colorScheme = resolvedMode`
+  - `init()`：应用启动时尽早调用，保证首屏（含登录页）不闪烁
+
+### 4.3 初始化时机（避免闪屏）
+
+位置：`blog-admin-web/src/main.ts`
+- 在 `app.mount('#app')` 之前执行：
+  - `useThemeStore(pinia).init()`
+
+原因：
+- 如果在页面渲染后再切换 `<html class="dark">`，会产生一瞬间的“亮→暗”闪烁。
+
+### 4.4 UI 切换入口（后台 Layout）
+
+位置：`blog-admin-web/src/layouts/AdminLayout.vue`
+- 顶部 header 使用 `el-segmented` 绑定 `theme.mode`，并在 `@change` 时调用 `theme.setMode(...)`
+- 提供 3 个选项：Light / Auto / Dark
+
+> 提示：登录页不经过 `AdminLayout`，但因 theme 已在 `main.ts` 初始化，登录页同样会跟随当前主题。
+
+### 4.5 样式约定（登录页/自定义背景）
+
+位置：`blog-admin-web/src/style.css`
+- `html.dark { ... }`：
+  - 除了 Element Plus 的暗黑变量生效外，本项目还在此定义后台专用的 CSS 变量（例如背景/文字/边框/阴影等）。
+- `body { background: var(--admin-bg-0); color: var(--admin-text); }`
+
+页面开发建议：
+- 优先使用 Element Plus 语义变量（如 `--el-bg-color`、`--el-text-color-regular`、`--el-border-color`）。
+- 需要自定义时，使用后台自有变量（`--admin-*`）并在 `html.dark` 覆盖。
+- 不要在组件里硬编码“黑色/白色”，避免主题切换后不一致。
+
+### 4.6 自测清单（暗黑模式）
+
+- 刷新页面：不会出现明显“先亮后暗/先暗后亮”的闪烁。
+- 登录页：跟随当前主题（切到 Dark 后刷新 `/login` 仍保持 Dark）。
+- Auto 模式：在默认窗口 `19:00~07:00` 内外切换时能自动更新。
+- 切换主题后：本地存储生效（关闭浏览器再打开仍保持）。
+
+---
+
+## 5. 联调方式（开发/生产）
+
+### 5.1 开发环境（推荐）
 - 后端：`http://localhost:8080`
 - 前台：`http://localhost:5173`
 - 后台：`http://localhost:5174`
@@ -82,22 +148,22 @@
 
 > 注意：如果你让后端临时跑在 `18080`，需要同步修改两个前端的 `vite.config.ts` 代理端口；建议开发期尽量统一用 `8080`。
 
-### 4.2 生产环境
+### 5.2 生产环境
 - 前台与后台分别是两个静态站点
 - `/api` 由 Nginx 反代到后端（前端无须 CORS）
 
 ---
 
-## 5. axios 封装规范（`request.ts`）
+## 6. axios 封装规范（`request.ts`）
 
-### 5.1 响应体处理
+### 6.1 响应体处理
 后端统一响应结构见 `docs/api-conventions.md`。
 
 前端处理建议：
 - `code === 0`：返回 `data`
 - 非 0：弹出 `message` 并 `throw`
 
-### 5.2 401/403 处理（区分前台/后台）
+### 6.2 401/403 处理（区分前台/后台）
 
 - `blog-admin-web`：
   - 401：清 token → 跳转 `/login`
@@ -105,19 +171,19 @@
 - `blog-web`：
   - 401：提示/兜底（不跳转登录，不存 token）
 
-### 5.3 Token 注入（仅后台）
+### 6.3 Token 注入（仅后台）
 后台管理端所有请求（除 login）自动注入：
 - `Authorization: Bearer <token>`
 
 ---
 
-## 6. Pinia（状态管理）
+## 7. Pinia（状态管理）
 
-### 6.1 后台 auth store（必须）
+### 7.1 后台 auth store（必须）
 - state：`token`、`me`、`loading`
 - actions：`login`、`logout`、`fetchMe`
 
-### 6.2 site store（前台/后台都可用）
+### 7.2 site store（前台/后台都可用）
 - state：`siteSetting`
 - actions：`fetchSite`（调用 `/api/site` 或 admin 的 `/api/admin/site`）
 
@@ -127,7 +193,7 @@
 
 ### 7.1 后台路由
 - `/login`：登录页
-- `/dashboard`：仪表盘
+- `/admin`：仪表盘
 - `/posts`：文章列表
 - `/posts/new`：新建
 - `/posts/:id/edit`：编辑
@@ -140,7 +206,7 @@
 
 ### 7.2 守卫策略
 - 未登录：除 `/login` 外全部跳转 `/login`
-- 已登录访问 `/login`：跳转 `/dashboard`
+- 已登录访问 `/login`：跳转 `/admin`
 - 刷新后：如 token 存在但 me 为空 → 调用 `/api/admin/auth/me`
 
 ### 7.3 Dashboard（Admin）图表（ECharts）

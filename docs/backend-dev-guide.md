@@ -28,7 +28,7 @@ PRD 已明确角色：VISITOR（匿名）+ ADMIN（后台）。v1.0 **不做“�
 - `GET /api/posts/{id}`
 - `GET /api/categories`
 - `GET /api/tags`
-- `GET /api/archives`
+- `GET /api/posts/archives`
 - `GET /api/site`
 - `GET /api/posts/{id}/comments`
 - `POST /api/posts/{id}/comments`（匿名提交，默认 PENDING）

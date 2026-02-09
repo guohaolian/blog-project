@@ -261,6 +261,8 @@ Path：`id`（number）
 
 ### 3.3 GET /api/archives
 
+> 注意：该接口在实现版中已调整为 `GET /api/posts/archives`，请以 `docs/openapi-implemented.md` 与 generated OpenAPI 为准。
+
 **Response.data**
 ```json
 [

@@ -288,6 +288,8 @@ Query：
 { "id": 1, "username": "admin", "displayName": "Administrator" }
 ```
 
+> 说明：当前实现不提供后端 logout 接口；前端退出登录通过清理本地 token 实现。
+
 ---
 
 ### 3.2 Dashboard
