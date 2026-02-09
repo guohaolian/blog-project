@@ -5,6 +5,16 @@
     <div class="login-bg-noise" aria-hidden="true" />
 
     <div class="login-card" role="main">
+      <div class="login-theme">
+        <el-tooltip :content="theme.isDark ? 'Switch to light' : 'Switch to dark'" placement="bottom">
+          <el-button circle text class="login-theme-btn" @click="theme.toggle()">
+            <el-icon size="18">
+              <component :is="theme.isDark ? Sunny : Moon" />
+            </el-icon>
+          </el-button>
+        </el-tooltip>
+      </div>
+
       <div class="login-brand">
         <div class="login-title">Blog Admin</div>
         <div class="login-subtitle">Sign in to continue</div>
@@ -81,10 +91,13 @@ import { reactive, ref, nextTick, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import type { FormInstance, FormRules } from 'element-plus'
 import { useAuthStore } from '../stores/auth'
+import { useThemeStore } from '../stores/theme'
+import { Moon, Sunny } from '@element-plus/icons-vue'
 
 const router = useRouter()
 const route = useRoute()
 const auth = useAuthStore()
+const theme = useThemeStore()
 
 const formRef = ref<FormInstance>()
 
@@ -189,6 +202,21 @@ const showSeedHint = import.meta.env.DEV
   box-shadow: var(--admin-shadow);
   backdrop-filter: blur(10px);
   padding: 30px;
+}
+
+.login-theme {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+}
+
+.login-theme-btn {
+  color: var(--admin-muted);
+}
+
+.login-theme-btn:hover {
+  color: var(--admin-text);
+  background: rgba(127, 127, 127, 0.08);
 }
 
 /* soft glow behind the card */

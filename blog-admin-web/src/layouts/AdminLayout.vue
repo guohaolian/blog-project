@@ -17,6 +17,15 @@
 
     <el-container>
       <el-header style="display: flex; align-items: center; justify-content: flex-end; gap: 12px">
+        <el-tooltip content="Theme" placement="bottom">
+          <el-segmented
+            v-model="theme.mode"
+            :options="themeOptions"
+            size="small"
+            @change="(v: any) => theme.setMode(v)"
+          />
+        </el-tooltip>
+
         <span v-if="auth.user" style="color: var(--el-text-color-regular)">
           {{ auth.user.displayName || auth.user.username }}
         </span>
@@ -34,10 +43,19 @@
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
+import { useThemeStore } from '../stores/theme'
+import { Moon, Sunny, Monitor } from '@element-plus/icons-vue'
 
 const route = useRoute()
 const router = useRouter()
 const auth = useAuthStore()
+const theme = useThemeStore()
+
+const themeOptions = [
+  { label: 'Light', value: 'light', showsIcon: true, icon: Sunny },
+  { label: 'Auto', value: 'auto', showsIcon: true, icon: Monitor },
+  { label: 'Dark', value: 'dark', showsIcon: true, icon: Moon },
+]
 
 const activePath = computed(() => route.path)
 
