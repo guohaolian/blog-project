@@ -14,7 +14,7 @@ dist/
 npm-debug.log*
 
 # Java
-/target/
+target/
 *.log
 
 # OS / Temp
