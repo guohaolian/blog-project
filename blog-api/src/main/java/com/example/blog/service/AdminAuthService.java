@@ -2,7 +2,7 @@ package com.example.blog.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.example.blog.common.BizException;
-import com.example.blog.common.ErrorCodes;
+import com.example.blog.common.ErrorCode;
 import com.example.blog.dto.admin.AdminLoginRequest;
 import com.example.blog.entity.AdminUser;
 import com.example.blog.mapper.AdminUserMapper;
@@ -28,12 +28,15 @@ public class AdminAuthService {
         AdminUser user = adminUserMapper.selectOne(
                 new LambdaQueryWrapper<AdminUser>().eq(AdminUser::getUsername, req.getUsername()).last("LIMIT 1")
         );
-        if (user == null || user.getStatus() == null || user.getStatus() != 1) {
-            throw new BizException(ErrorCodes.UNAUTHORIZED, "invalid username or password");
+        if (user == null) {
+            throw new BizException(ErrorCode.ADMIN_USERNAME_OR_PASSWORD_INVALID);
+        }
+        if (user.getStatus() == null || user.getStatus() != 1) {
+            throw new BizException(ErrorCode.ADMIN_USER_DISABLED);
         }
 
         if (!passwordEncoder.matches(req.getPassword(), user.getPasswordHash())) {
-            throw new BizException(ErrorCodes.UNAUTHORIZED, "invalid username or password");
+            throw new BizException(ErrorCode.ADMIN_USERNAME_OR_PASSWORD_INVALID);
         }
 
         String token = jwtTokenService.createAdminToken(user.getId(), user.getUsername());
@@ -43,7 +46,7 @@ public class AdminAuthService {
     public AdminMeResponse me(Long adminId) {
         AdminUser user = adminUserMapper.selectById(adminId);
         if (user == null) {
-            throw new BizException(ErrorCodes.UNAUTHORIZED, "invalid token");
+            throw new BizException(ErrorCode.UNAUTHORIZED, "invalid token");
         }
         return new AdminMeResponse(user.getId(), user.getUsername(), user.getDisplayName());
     }

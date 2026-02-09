@@ -63,12 +63,12 @@ import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { adminPostDelete, adminPostPage, adminPostPublish, adminPostUnpublish } from '../api/posts'
+import { useAsyncTask } from '../utils/requestHelpers'
 import type { AdminPostListItemVO } from '../api/posts'
 
 const router = useRouter()
 const route = useRoute()
 
-const loading = ref(false)
 const list = ref<AdminPostListItemVO[]>([])
 const total = ref(0)
 
@@ -76,6 +76,20 @@ const pageNum = ref(1)
 const pageSize = ref(10)
 const status = ref<string | undefined>()
 const keyword = ref('')
+
+const { loading, run: fetchList } = useAsyncTask(
+  async () => {
+    const res = await adminPostPage({
+      pageNum: pageNum.value,
+      pageSize: pageSize.value,
+      status: status.value,
+      keyword: keyword.value || undefined,
+    })
+    list.value = res.list
+    total.value = res.total
+  },
+  { defaultErrorMessage: 'Failed to load posts' },
+)
 
 function syncToQuery() {
   const q: Record<string, any> = {
@@ -99,22 +113,6 @@ function initFromQuery() {
 
   const kw = typeof q.keyword === 'string' ? q.keyword : ''
   keyword.value = kw
-}
-
-async function fetchList() {
-  loading.value = true
-  try {
-    const res = await adminPostPage({
-      pageNum: pageNum.value,
-      pageSize: pageSize.value,
-      status: status.value,
-      keyword: keyword.value || undefined,
-    })
-    list.value = res.list
-    total.value = res.total
-  } finally {
-    loading.value = false
-  }
 }
 
 function onSearch() {

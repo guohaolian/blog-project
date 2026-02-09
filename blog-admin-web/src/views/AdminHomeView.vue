@@ -189,11 +189,11 @@ import { adminDashboardStats } from '../api/dashboard'
 import ECharts from '../components/charts/ECharts.vue'
 import type { EChartsOption } from 'echarts'
 import type { ECElementEvent } from 'echarts/core'
+import { useAsyncTask } from '../utils/requestHelpers'
 
 const router = useRouter()
 const auth = useAuthStore()
 
-const statsLoading = ref(false)
 const statsError = ref<string | null>(null)
 const stats = reactive({
   total: 0,
@@ -205,7 +205,6 @@ const stats = reactive({
   totalViews: 0,
 })
 
-const recentLoading = ref(false)
 const recentError = ref<string | null>(null)
 const recent = ref<AdminPostListItemVO[]>([])
 
@@ -217,10 +216,8 @@ function goComments() {
   router.push({ path: '/admin/comments', query: { status: 'PENDING' } })
 }
 
-async function loadStats() {
-  statsLoading.value = true
-  statsError.value = null
-  try {
+const { loading: statsLoading, run: loadStats } = useAsyncTask(
+  async () => {
     const s = await adminDashboardStats()
     stats.total = s.total
     stats.draft = s.draft
@@ -229,25 +226,19 @@ async function loadStats() {
     stats.tags = s.tags
     stats.commentsPending = s.commentsPending
     stats.totalViews = s.totalViews
-  } catch (e) {
-    statsError.value = 'Failed to load stats. Please check backend /admin/dashboard/stats.'
-  } finally {
-    statsLoading.value = false
-  }
-}
+    statsError.value = null
+  },
+  { defaultErrorMessage: 'Failed to load stats' },
+)
 
-async function loadRecent() {
-  recentLoading.value = true
-  recentError.value = null
-  try {
+const { loading: recentLoading, run: loadRecent } = useAsyncTask(
+  async () => {
     const res = await adminPostPage({ pageNum: 1, pageSize: 5 })
     recent.value = res.list || []
-  } catch {
-    recentError.value = 'Failed to load recent posts.'
-  } finally {
-    recentLoading.value = false
-  }
-}
+    recentError.value = null
+  },
+  { defaultErrorMessage: 'Failed to load recent posts' },
+)
 
 function logout() {
   auth.logout()

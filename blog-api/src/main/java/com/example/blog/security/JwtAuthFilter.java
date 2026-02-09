@@ -1,6 +1,8 @@
 package com.example.blog.security;
 
+import com.example.blog.common.ApiResponse;
 import com.example.blog.common.ErrorCodes;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.JwtException;
@@ -25,6 +27,7 @@ import java.util.Collections;
 public class JwtAuthFilter extends OncePerRequestFilter {
 
     private final SecretKey key;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     public JwtAuthFilter(String secret) {
         byte[] bytes = secret.getBytes(StandardCharsets.UTF_8);
@@ -60,11 +63,13 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
             filterChain.doFilter(request, response);
         } catch (JwtException | IllegalArgumentException e) {
-            // Invalid token -> clear context and continue; protected endpoints will return 401
+            // Invalid token -> clear context and return 401 with unified ApiResponse
             SecurityContextHolder.clearContext();
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.setContentType("application/json;charset=UTF-8");
-            response.getWriter().write("{\"code\":" + ErrorCodes.UNAUTHORIZED + ",\"message\":\"invalid token\",\"data\":null,\"timestamp\":" + System.currentTimeMillis() + "}");
+            response.getWriter().write(objectMapper.writeValueAsString(
+                    ApiResponse.fail(ErrorCodes.UNAUTHORIZED, "invalid token")
+            ));
         }
     }
 

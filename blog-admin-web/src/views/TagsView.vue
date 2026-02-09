@@ -35,13 +35,20 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, reactive, ref } from 'vue'
+import { reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
-import { adminTagCreate, adminTagDelete, adminTagList, adminTagUpdate, type TagVO } from '../api/tags'
+import * as TagsApi from '../api/tags'
+import { useAsyncTask } from '../utils/requestHelpers'
 
-const loading = ref(false)
+const { loading, run: fetchList } = useAsyncTask(
+  async () => {
+    list.value = await TagsApi.adminTagList()
+  },
+  { defaultErrorMessage: 'Failed to load tags' },
+)
+
 const saving = ref(false)
-const list = ref<TagVO[]>([])
+const list = ref<TagsApi.TagVO[]>([])
 
 const dialogVisible = ref(false)
 const editingId = ref<number | null>(null)
@@ -51,15 +58,6 @@ const form = reactive({
   name: '',
 })
 
-async function fetchList() {
-  loading.value = true
-  try {
-    list.value = await adminTagList()
-  } finally {
-    loading.value = false
-  }
-}
-
 function openCreate() {
   editing.value = false
   editingId.value = null
@@ -67,7 +65,7 @@ function openCreate() {
   dialogVisible.value = true
 }
 
-function openEdit(row: TagVO) {
+function openEdit(row: TagsApi.TagVO) {
   editing.value = true
   editingId.value = row.id
   form.name = row.name
@@ -83,10 +81,10 @@ async function save() {
   saving.value = true
   try {
     if (editing.value && editingId.value != null) {
-      await adminTagUpdate(editingId.value, { name: form.name })
+      await TagsApi.adminTagUpdate(editingId.value, { name: form.name })
       ElMessage.success('Updated')
     } else {
-      await adminTagCreate({ name: form.name })
+      await TagsApi.adminTagCreate({ name: form.name })
       ElMessage.success('Created')
     }
     dialogVisible.value = false
@@ -97,10 +95,10 @@ async function save() {
 }
 
 async function remove(id: number) {
-  await adminTagDelete(id)
+  await TagsApi.adminTagDelete(id)
   ElMessage.success('Deleted')
   await fetchList()
 }
 
-onMounted(fetchList)
+fetchList()
 </script>

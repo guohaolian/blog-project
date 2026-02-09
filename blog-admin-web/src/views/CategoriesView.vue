@@ -35,7 +35,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, reactive, ref } from 'vue'
+import { reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import {
   adminCategoryCreate,
@@ -44,8 +44,15 @@ import {
   adminCategoryUpdate,
   type CategoryVO,
 } from '../api/categories'
+import { useAsyncTask } from '../utils/requestHelpers'
 
-const loading = ref(false)
+const { loading, run: fetchList } = useAsyncTask(
+  async () => {
+    list.value = await adminCategoryList()
+  },
+  { defaultErrorMessage: 'Failed to load categories' },
+)
+
 const saving = ref(false)
 const list = ref<CategoryVO[]>([])
 
@@ -56,15 +63,6 @@ const editing = ref(false)
 const form = reactive({
   name: '',
 })
-
-async function fetchList() {
-  loading.value = true
-  try {
-    list.value = await adminCategoryList()
-  } finally {
-    loading.value = false
-  }
-}
 
 function openCreate() {
   editing.value = false
@@ -108,5 +106,5 @@ async function remove(id: number) {
   await fetchList()
 }
 
-onMounted(fetchList)
+fetchList()
 </script>

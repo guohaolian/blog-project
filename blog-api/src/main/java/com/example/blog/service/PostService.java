@@ -5,7 +5,7 @@ import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.example.blog.common.BizException;
-import com.example.blog.common.ErrorCodes;
+import com.example.blog.common.ErrorCode;
 import com.example.blog.common.PageResult;
 import com.example.blog.common.TimeUtil;
 import com.example.blog.dto.PostQuery;
@@ -167,8 +167,14 @@ public class PostService {
 
     public PostDetailVO getPublishedDetail(Long id) {
         Post post = postMapper.selectById(id);
-        if (post == null || post.getIsDeleted() != null && post.getIsDeleted() == 1 || !"PUBLISHED".equals(post.getStatus())) {
-            throw new BizException(ErrorCodes.NOT_FOUND, "post not found");
+        if (post == null) {
+            throw new BizException(ErrorCode.POST_NOT_FOUND);
+        }
+        if (post.getIsDeleted() != null && post.getIsDeleted() == 1) {
+            throw new BizException(ErrorCode.POST_NOT_FOUND);
+        }
+        if (!"PUBLISHED".equals(post.getStatus())) {
+            throw new BizException(ErrorCode.POST_NOT_PUBLISHED);
         }
 
         // atomic increment view_count

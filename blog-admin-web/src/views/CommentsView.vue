@@ -83,11 +83,11 @@ import {
   adminCommentReject,
   type AdminCommentVO,
 } from '../api/comments'
+import { useAsyncTask } from '../utils/requestHelpers'
 
 const router = useRouter()
 const route = useRoute()
 
-const loading = ref(false)
 const list = ref<AdminCommentVO[]>([])
 const total = ref(0)
 
@@ -134,9 +134,8 @@ function onFilterChange() {
   fetchList()
 }
 
-async function fetchList() {
-  loading.value = true
-  try {
+const { loading, run: fetchList } = useAsyncTask(
+  async () => {
     const res = await adminCommentPage({
       pageNum: query.pageNum,
       pageSize: query.pageSize,
@@ -145,10 +144,9 @@ async function fetchList() {
     })
     list.value = res.list || []
     total.value = res.total || 0
-  } finally {
-    loading.value = false
-  }
-}
+  },
+  { defaultErrorMessage: 'Failed to load comments' },
+)
 
 async function approve(id: number) {
   await adminCommentApprove(id)

@@ -23,7 +23,7 @@
 
       <el-form-item label="Links (JSON)">
         <el-input v-model="form.linksJson" type="textarea" :rows="4" placeholder='[{"name":"GitHub","url":"https://github.com"}]' />
-        <div style="margin-top: 6px; color: var(--el-text-color-secondary); font-size: 12px">
+        <div style="margin-top: 6px; opacity: 0.75; font-size: 12px">
           Tip: keep it as JSON array string for simplicity.
         </div>
       </el-form-item>
@@ -44,10 +44,10 @@
             <el-input v-model="form.bannerUrl" placeholder="Or paste /uploads/... URL" />
           </div>
 
-          <div v-if="form.bannerUrl" style="border: 1px solid var(--el-border-color); border-radius: 10px; overflow: hidden; max-width: 720px">
+          <div v-if="form.bannerUrl" style="border: 1px solid rgba(0,0,0,0.12); border-radius: 10px; overflow: hidden; max-width: 720px">
             <img :src="form.bannerUrl" alt="banner" style="display:block; width: 100%; height: 220px; object-fit: cover" />
           </div>
-          <div style="color: var(--el-text-color-secondary); font-size: 12px">
+          <div style="opacity: 0.75; font-size: 12px">
             Tip: Banner will show as full-screen hero on Home page. Uploaded image will also appear in Resources.
           </div>
         </div>
@@ -80,8 +80,8 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { adminGetSite, adminUpdateSite } from '../api/site'
 import { adminUploadImage } from '../api/upload'
 import { adminResourceDelete, adminResourcePage } from '../api/resources'
+import { useAsyncTask, runWithErrorToast } from '../utils/requestHelpers'
 
-const loading = ref(false)
 const saving = ref(false)
 
 const form = reactive({
@@ -99,12 +99,34 @@ const form = reactive({
 const loadedBannerUrl = ref('')
 const lastUploadedBannerUrl = ref('')
 
+const { loading, run: load } = useAsyncTask(
+  async () => {
+    const s = await adminGetSite()
+    form.siteName = s.siteName || ''
+    form.siteNotice = s.siteNotice || ''
+    form.aboutContent = s.aboutContent || ''
+    form.linksJson = s.linksJson || '[]'
+    form.bannerUrl = s.bannerUrl || ''
+    loadedBannerUrl.value = form.bannerUrl
+    lastUploadedBannerUrl.value = ''
+    form.seoTitle = s.seoTitle || ''
+    form.seoKeywords = s.seoKeywords || ''
+    form.seoDescription = s.seoDescription || ''
+    form.footerText = s.footerText || ''
+  },
+  { defaultErrorMessage: 'Failed to load settings' },
+)
+
 async function onBannerFileChange(uploadFile: any) {
   const f: File | undefined = uploadFile?.raw
   if (!f) return
   saving.value = true
   try {
-    const r = await adminUploadImage(f)
+    const r = await runWithErrorToast(
+      () => adminUploadImage(f),
+      { defaultErrorMessage: 'Failed to upload banner' },
+    )
+    if (!r) return
     form.bannerUrl = r.url
     lastUploadedBannerUrl.value = r.url
     ElMessage.success('Banner uploaded')
@@ -114,12 +136,14 @@ async function onBannerFileChange(uploadFile: any) {
 }
 
 async function deleteResourceByUrl(url: string) {
-  // find by keyword(url) then delete first exact match
   const page = await adminResourcePage({ pageNum: 1, pageSize: 10, keyword: url, contentTypePrefix: 'image/' })
   const hit = (page.list || []).find((x) => x.url === url)
   if (!hit) return false
-  await adminResourceDelete(hit.id)
-  return true
+  const ok = await runWithErrorToast(
+    () => adminResourceDelete(hit.id),
+    { defaultErrorMessage: 'Failed to delete resource' },
+  )
+  return !!ok
 }
 
 async function onClearBanner() {
@@ -147,28 +171,6 @@ async function onClearBanner() {
   }
 }
 
-async function load() {
-  loading.value = true
-  try {
-    const s = await adminGetSite()
-    form.siteName = s.siteName || ''
-    form.siteNotice = s.siteNotice || ''
-    form.aboutContent = s.aboutContent || ''
-    form.linksJson = s.linksJson || '[]'
-    form.bannerUrl = s.bannerUrl || ''
-    loadedBannerUrl.value = form.bannerUrl
-    lastUploadedBannerUrl.value = ''
-    form.seoTitle = s.seoTitle || ''
-    form.seoKeywords = s.seoKeywords || ''
-    form.seoDescription = s.seoDescription || ''
-    form.footerText = s.footerText || ''
-  } catch (e: any) {
-    ElMessage.error(`Failed to load settings: ${e?.message || e}`)
-  } finally {
-    loading.value = false
-  }
-}
-
 async function save() {
   if (!form.siteName.trim()) {
     ElMessage.warning('Site name is required')
@@ -190,7 +192,11 @@ async function save() {
 
   saving.value = true
   try {
-    await adminUpdateSite({ ...form })
+    const ok = await runWithErrorToast(
+      () => adminUpdateSite({ ...form }),
+      { defaultErrorMessage: 'Failed to save settings' },
+    )
+    if (!ok) return
     ElMessage.success('Saved')
     await load()
   } finally {

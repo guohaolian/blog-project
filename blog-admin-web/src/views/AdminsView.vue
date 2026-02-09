@@ -79,8 +79,8 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import * as AdminApi from '../api/admins'
 import { useAuthStore } from '../stores/auth'
 import { useRouter } from 'vue-router'
+import { useAsyncTask, runWithErrorToast } from '../utils/requestHelpers'
 
-const loading = ref(false)
 const saving = ref(false)
 const list = ref<AdminApi.AdminUserVO[]>([])
 
@@ -102,14 +102,12 @@ const resetForm = reactive({
   newPassword: '',
 })
 
-async function fetchList() {
-  loading.value = true
-  try {
+const { loading, run: fetchList } = useAsyncTask(
+  async () => {
     list.value = await AdminApi.adminUserList()
-  } finally {
-    loading.value = false
-  }
-}
+  },
+  { defaultErrorMessage: 'Failed to load admins' },
+)
 
 function openCreate() {
   createForm.username = ''
@@ -133,11 +131,15 @@ async function create() {
   }
   saving.value = true
   try {
-    await AdminApi.adminUserCreate({
-      username: createForm.username,
-      password: createForm.password,
-      displayName: createForm.displayName || undefined,
-    })
+    const ok = await runWithErrorToast(
+      () => AdminApi.adminUserCreate({
+        username: createForm.username,
+        password: createForm.password,
+        displayName: createForm.displayName || undefined,
+      }),
+      { defaultErrorMessage: 'Failed to create admin' },
+    )
+    if (!ok) return
     ElMessage.success('Created')
     createVisible.value = false
     fetchList()
@@ -164,7 +166,12 @@ async function reset() {
   }
   saving.value = true
   try {
-    await AdminApi.adminUserResetPassword(resetForm.id, { newPassword: resetForm.newPassword })
+    const ok = await runWithErrorToast(
+      () => AdminApi.adminUserResetPassword(resetForm.id, { newPassword: resetForm.newPassword }),
+      { defaultErrorMessage: 'Failed to reset password' },
+    )
+    if (!ok) return
+
     ElMessage.success('Reset')
     resetVisible.value = false
 
@@ -195,7 +202,11 @@ async function toggle(row: AdminApi.AdminUserVO) {
   )
   saving.value = true
   try {
-    await AdminApi.adminUserUpdateStatus(row.id, { status: next })
+    const ok = await runWithErrorToast(
+      () => AdminApi.adminUserUpdateStatus(row.id, { status: next }),
+      { defaultErrorMessage: 'Failed to update admin status' },
+    )
+    if (!ok) return
     ElMessage.success('Updated')
     fetchList()
   } finally {

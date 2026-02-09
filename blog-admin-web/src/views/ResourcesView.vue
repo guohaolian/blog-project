@@ -82,8 +82,8 @@
 import { onMounted, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { adminResourceDelete, adminResourcePage, type FileResourceVO } from '../api/resources'
+import { useAsyncTask, runWithErrorToast } from '../utils/requestHelpers'
 
-const loading = ref(false)
 const list = ref<FileResourceVO[]>([])
 const total = ref(0)
 
@@ -93,6 +93,20 @@ const pageSize = ref(10)
 const keyword = ref('')
 const typeFilter = ref('')
 const copyMode = ref<'relative' | 'absolute'>('relative')
+
+const { loading, run: fetchList } = useAsyncTask(
+  async () => {
+    const res = await adminResourcePage({
+      pageNum: pageNum.value,
+      pageSize: pageSize.value,
+      keyword: keyword.value || undefined,
+      contentTypePrefix: typeFilter.value || undefined,
+    })
+    list.value = res.list || []
+    total.value = res.total || 0
+  },
+  { defaultErrorMessage: 'Failed to load resources' },
+)
 
 function isImage(contentType?: string) {
   return !!contentType && contentType.startsWith('image/')
@@ -118,22 +132,6 @@ function toAbsUrl(url: string) {
   return base + '/' + url
 }
 
-async function fetchList() {
-  loading.value = true
-  try {
-    const res = await adminResourcePage({
-      pageNum: pageNum.value,
-      pageSize: pageSize.value,
-      keyword: keyword.value || undefined,
-      contentTypePrefix: typeFilter.value || undefined,
-    })
-    list.value = res.list || []
-    total.value = res.total || 0
-  } finally {
-    loading.value = false
-  }
-}
-
 function onFilterChange() {
   pageNum.value = 1
   fetchList()
@@ -156,7 +154,13 @@ async function remove(id: number) {
     'Confirm',
     { type: 'warning' },
   )
-  await adminResourceDelete(id)
+
+  const ok = await runWithErrorToast(
+    () => adminResourceDelete(id),
+    { defaultErrorMessage: 'Failed to delete resource' },
+  )
+  if (!ok) return
+
   ElMessage.success('Deleted. Note: posts referencing this URL are not updated automatically.')
   fetchList()
 }

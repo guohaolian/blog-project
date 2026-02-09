@@ -5,7 +5,7 @@
 ## A. 后台管理端（Admin Web）
 
 ### A0 UI / 主题（可选但推荐）
-- [ ] 暗色模式可用（前台 + 后台）：支持 Light/Dark/Auto 切换；刷新后保持（localStorage 持久化）；Auto 时间窗切换生效；后台登录页与后台页主题一致
+- [ ] 暗色模式可用支持 Light/Dark/Auto 切换；刷新后保持（localStorage 持久化）；Auto 时间窗切换生效；后台登录页与后台页主题一致
 
 ### A1 登录与鉴权
 - [ ] 输入正确账号密码可登录
@@ -45,6 +45,8 @@
 ---
 
 ## B. 前台 Web
+### B0 UI / 主题（可选但推荐）
+- [ ] 暗色模式可用支持 Light/Dark/Auto 切换；刷新后保持（localStorage 持久化）；Auto 时间窗切换生效；后台登录页与后台页主题一致
 
 ### B1 浏览
 - [ ] 首页首屏 Banner（若配置了 bannerUrl）正常展示，并有向下提示

@@ -80,6 +80,7 @@ import {
 } from '../api/posts'
 import { adminUploadImage } from '../api/upload'
 import type { CategoryVO, TagVO } from '../api/posts'
+import { useAsyncTask, runWithErrorToast } from '../utils/requestHelpers'
 
 const route = useRoute()
 const router = useRouter()
@@ -111,50 +112,66 @@ const rules: FormRules = {
   content: [{ required: true, message: 'Content is required', trigger: 'blur' }],
 }
 
-async function loadMeta() {
-  const [cs, ts] = await Promise.all([adminCategories(), adminTags()])
-  categories.value = cs
-  tags.value = ts
-}
+const { run: loadMeta } = useAsyncTask(
+  async () => {
+    const [cs, ts] = await Promise.all([adminCategories(), adminTags()])
+    categories.value = cs
+    tags.value = ts
+  },
+  { defaultErrorMessage: 'Failed to load categories/tags' },
+)
 
-async function loadDetail() {
-  if (isNew.value) return
-  const vo = await adminPostGet(id.value)
-  form.title = vo.title
-  form.summary = vo.summary || ''
-  form.content = vo.content
-  form.coverUrl = vo.coverUrl || ''
-  form.categoryId = (vo.categoryId as any) || undefined
-  form.tagIds = vo.tagIds || []
-  form.status = vo.status
-}
+const { run: loadDetail } = useAsyncTask(
+  async () => {
+    if (isNew.value) return
+    const vo = await adminPostGet(id.value)
+    form.title = vo.title
+    form.summary = vo.summary || ''
+    form.content = vo.content
+    form.coverUrl = vo.coverUrl || ''
+    form.categoryId = (vo.categoryId as any) || undefined
+    form.tagIds = vo.tagIds || []
+    form.status = vo.status
+  },
+  { defaultErrorMessage: 'Failed to load post' },
+)
 
 async function save() {
-  const ok = await formRef.value?.validate().catch(() => false)
-  if (!ok) return
+  const okValid = await formRef.value?.validate().catch(() => false)
+  if (!okValid) return
 
   loading.value = true
   try {
     if (isNew.value) {
-      const newId = await adminPostCreate({
-        title: form.title,
-        summary: form.summary,
-        content: form.content,
-        coverUrl: form.coverUrl || undefined,
-        categoryId: form.categoryId || null,
-        tagIds: form.tagIds,
-      })
+      const newId = await runWithErrorToast(
+        () =>
+          adminPostCreate({
+            title: form.title,
+            summary: form.summary,
+            content: form.content,
+            coverUrl: form.coverUrl || undefined,
+            categoryId: form.categoryId || null,
+            tagIds: form.tagIds,
+          }),
+        { defaultErrorMessage: 'Failed to create post' },
+      )
+      if (!newId) return
       ElMessage.success('Saved')
       router.replace(`/admin/posts/${newId}/edit`)
     } else {
-      await adminPostUpdate(id.value, {
-        title: form.title,
-        summary: form.summary,
-        content: form.content,
-        coverUrl: form.coverUrl || undefined,
-        categoryId: form.categoryId || null,
-        tagIds: form.tagIds,
-      })
+      const ok = await runWithErrorToast(
+        () =>
+          adminPostUpdate(id.value, {
+            title: form.title,
+            summary: form.summary,
+            content: form.content,
+            coverUrl: form.coverUrl || undefined,
+            categoryId: form.categoryId || null,
+            tagIds: form.tagIds,
+          }),
+        { defaultErrorMessage: 'Failed to update post' },
+      )
+      if (!ok) return
       ElMessage.success('Saved')
     }
   } finally {
@@ -163,13 +180,21 @@ async function save() {
 }
 
 async function publish() {
-  await adminPostPublish(id.value)
+  const ok = await runWithErrorToast(
+    () => adminPostPublish(id.value),
+    { defaultErrorMessage: 'Failed to publish' },
+  )
+  if (!ok) return
   form.status = 'PUBLISHED'
   ElMessage.success('Published')
 }
 
 async function unpublish() {
-  await adminPostUnpublish(id.value)
+  const ok = await runWithErrorToast(
+    () => adminPostUnpublish(id.value),
+    { defaultErrorMessage: 'Failed to unpublish' },
+  )
+  if (!ok) return
   form.status = 'DRAFT'
   ElMessage.success('Unpublished')
 }
@@ -237,6 +262,10 @@ async function onBodyBeforeUpload(file: File) {
 
 onMounted(async () => {
   await loadMeta()
-  await loadDetail()
+  const detail = await loadDetail()
+  if (!detail && !isNew.value) {
+    // loadDetail already toasts; just exit to list.
+    await router.replace('/admin/posts')
+  }
 })
 </script>

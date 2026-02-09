@@ -327,7 +327,19 @@ async function back() {
 }
 
 async function loadPost(id: number) {
-  post.value = await getPostDetail(id)
+  try {
+    post.value = await getPostDetail(id)
+  } catch (e: any) {
+    // getPostDetail rejects with Error(message) via axios interceptor
+    ElMessage.error(e?.message || 'Failed to load post')
+    post.value = null
+    rendered.value = ''
+    toc.value = []
+    // Navigate away so user doesn't stay on a blank detail page.
+    await router.replace('/')
+    return
+  }
+
   rebuildMarkdown()
 
   // if URL has hash, scroll to it after DOM updates

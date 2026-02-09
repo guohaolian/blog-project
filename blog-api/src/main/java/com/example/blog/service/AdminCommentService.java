@@ -4,7 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.example.blog.common.BizException;
-import com.example.blog.common.ErrorCodes;
+import com.example.blog.common.ErrorCode;
 import com.example.blog.common.PageResult;
 import com.example.blog.common.TimeUtil;
 import com.example.blog.dto.admin.AdminCommentQuery;
@@ -90,7 +90,7 @@ public class AdminCommentService {
     private void updateStatus(Long id, String status) {
         Comment c = commentMapper.selectById(id);
         if (c == null) {
-            throw new BizException(ErrorCodes.NOT_FOUND, "comment not found");
+            throw new BizException(ErrorCode.COMMENT_NOT_FOUND);
         }
         c.setStatus(status);
         commentMapper.updateById(c);

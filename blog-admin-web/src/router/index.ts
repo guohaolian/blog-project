@@ -12,6 +12,7 @@ const CommentsView = () => import('../views/CommentsView.vue')
 const SettingsView = () => import('../views/SettingsView.vue')
 const ResourcesView = () => import('../views/ResourcesView.vue')
 const AdminsView = () => import('../views/AdminsView.vue')
+const NotFoundView = () => import('../views/NotFoundView.vue')
 
 export const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -67,6 +68,12 @@ export const router = createRouter({
         { path: 'admins', name: 'admins', component: AdminsView },
       ],
     },
+    {
+      path: '/:pathMatch(.*)*',
+      name: 'not-found',
+      component: NotFoundView,
+      meta: { title: 'Not Found' },
+    }
   ],
 })
 
