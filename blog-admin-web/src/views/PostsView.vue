@@ -98,6 +98,10 @@ function syncToQuery() {
     keyword: keyword.value || undefined,
   }
 
+  // Only sync query when we're still on the list page.
+  // Otherwise it may override navigation (e.g., click Edit then this replace sends you back).
+  if (route.path !== '/admin/posts') return
+
   // Keep URL in sync without pushing new history on every change.
   router.replace({ path: '/admin/posts', query: q })
 }
