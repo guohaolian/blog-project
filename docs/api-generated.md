@@ -120,3 +120,11 @@ java -jar app.jar --spring.profiles.active=prod \
 - 让接口列表永远跟代码一致
 - 让联调可以直接在线调试
 - 便于导入到 Apifox / Postman
+
+## 6. 与“导入 Markdown + 图片自动上传替换”的关系（Admin）
+
+管理端文章编辑页的“导入 Markdown 后批量上传图片并替换链接”能力：
+- 复用接口：`POST /api/admin/upload/image`
+- 典型流程：前端解析正文里的本地图片路径 → 逐个调用上传接口 → 拿到返回的 `url` → 回写替换正文中的图片引用
+
+接口字段与返回结构请以 Swagger/OpenAPI 为准（本文档不重复列参数）。
