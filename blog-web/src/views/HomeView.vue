@@ -366,6 +366,13 @@ onBeforeUnmount(() => {
   gap: 14px;
 }
 
+/* Mobile: only show post cards list (hide hot/categories/tags sidebar) */
+@media (max-width: 760px) {
+  .home__side {
+    display: none;
+  }
+}
+
 .home__sideHeader {
   display: flex;
   justify-content: space-between;

@@ -1,6 +1,12 @@
 <template>
-  <div class="post-detail">
-    <div class="post-detail__container">
+  <div
+    class="post-detail"
+    :class="{
+      'post-detail--single': forceSingleColumn,
+      'post-detail--no-sides': !hasAnySidebar,
+    }"
+  >
+    <div class="post-detail__container" ref="containerEl">
       <div class="post-detail__shell">
         <!-- left toc (independent column) -->
         <aside class="post-detail__left" v-if="toc.length > 0">
@@ -148,7 +154,7 @@
 </template>
 
 <script setup lang="ts">
-import { nextTick, onMounted, reactive, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, onBeforeUnmount, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { getPostDetail, getPosts, type PostDetailVO, type PostListItemVO } from '../api/posts'
@@ -186,6 +192,30 @@ const commentForm = reactive({
 })
 
 const mainScrollEl = ref<HTMLElement | null>(null)
+const containerEl = ref<HTMLElement | null>(null)
+
+// Container-width responsive switching
+const forceSingleColumn = ref(false)
+let ro: ResizeObserver | null = null
+
+const hasAnySidebar = computed(() => (toc.value?.length || 0) > 0 || (related.value?.length || 0) > 0)
+
+function updateResponsiveByContainerWidth() {
+  // If there's no sidebar at all, always keep single-column centered layout.
+  if (!hasAnySidebar.value) {
+    forceSingleColumn.value = false
+    return
+  }
+
+  const el = containerEl.value
+  if (!el) return
+  const w = el.getBoundingClientRect().width
+  // Minimum 3-col requirement based on CSS vars:
+  // sideMin*2 + main(900) + gap*2. Padding is already inside container width.
+  // Note: container padding is part of its own width, so don't add it here.
+  const min3 = 180 * 2 + 900 + 14 * 2 // = 1288
+  forceSingleColumn.value = w < min3
+}
 
 let mdApi: null | {
   enableMarkdownHighlight: () => Promise<void>
@@ -372,7 +402,23 @@ onMounted(async () => {
     // ignore highlight failures (markdown should still render)
   }
 
+  // Container-width responsive switching (only meaningful when sidebars exist)
+  try {
+    ro = new ResizeObserver(() => updateResponsiveByContainerWidth())
+    if (containerEl.value) ro.observe(containerEl.value)
+    updateResponsiveByContainerWidth()
+  } catch {
+    // ResizeObserver unsupported
+  }
+
   await loadPost(Number(route.params.id))
+})
+
+onBeforeUnmount(() => {
+  if (ro) {
+    ro.disconnect()
+    ro = null
+  }
 })
 
 watch(
@@ -439,30 +485,114 @@ function setupTocObserver() {
 <style scoped>
 .post-detail{
   --app-topbar-h:120px;
+
+  /* layout constants (keep in sync with grid + container styles) */
+  --pd-side-min: 180px;
+  --pd-main-width: 900px;
+  --pd-gap: 14px;
+  --pd-container-pad: 18px;
+
+  /* If viewport can't fit: leftMin + main + rightMin + gaps + padding, hide sidebars */
+  --pd-breakpoint-hide-sides: calc(
+    (var(--pd-side-min) * 2) +
+    var(--pd-main-width) +
+    (var(--pd-gap) * 2) +
+    (var(--pd-container-pad) * 2)
+  );
+}
+
+/* No sidebars at all: use a centered single column that fills available width up to 900px. */
+.post-detail--no-sides .post-detail__shell {
+  grid-template-columns: 1fr;
+  justify-content: center;
+}
+
+.post-detail--no-sides .post-detail__main {
+  width: 100%;
+  max-width: var(--pd-main-width);
+  margin: 0 auto;
+  padding-right: 0;
+}
+
+/* Force single column based on container width (ResizeObserver). */
+.post-detail--single .post-detail__left,
+.post-detail--single .post-detail__right {
+  display: none;
+}
+
+.post-detail--single .post-detail__shell {
+  grid-template-columns: 1fr;
+  justify-content: center;
+}
+
+.post-detail--single .post-detail__main {
+  width: 100%;
+  max-width: var(--pd-main-width);
+  margin: 0 auto;
+  padding-right: 0;
+}
+
+/* Responsive strategy:
+   - Desktop: 3-column grid.
+   - SIDE columns can shrink (down to --pd-side-min).
+   - MAIN column stays fixed at --pd-main-width as long as sidebars are visible.
+   - If container becomes too narrow, JS adds .post-detail--single to hide sidebars.
+   - Mobile keeps single-column behavior.
+*/
+
+
+/* Mobile: single-column and let the page grow naturally. */
+@media (max-width: 768px) {
+  .post-detail__container {
+    padding: 12px 12px;
+  }
+
+  .post-detail__shell {
+    height: auto;
+    gap: 0;
+    display: block; /* avoid any grid/flex quirks */
+  }
+
+  .post-detail__left,
+  .post-detail__right {
+    display: none;
+  }
+
+  .post-detail__main {
+    height: auto;
+    overflow: visible;
+    padding-right: 0;
+  }
 }
 
 .post-detail__container {
   max-width: 1500px;
   margin: 0 auto;
-  padding: 16px 18px;
+  padding: 16px var(--pd-container-pad);
 }
 
 .post-detail__shell {
-  display: flex;
-  gap: 14px;
-  align-items: flex-start;
+  display: grid;
+  align-items: start;
+  gap: var(--pd-gap);
   overflow: visible;
   height: calc(100vh - var(--app-topbar-h, 120px));
+
+  /* Sidebars shrink first; main stays fixed while sidebars exist. */
+  grid-template-columns:
+    clamp(var(--pd-side-min), 18vw, 260px)
+    minmax(var(--pd-main-width), var(--pd-main-width))
+    clamp(var(--pd-side-min), 18vw, 260px);
+
+  justify-content: center;
 }
 
 .post-detail__left,
 .post-detail__right {
-  flex: 0 0 auto;
-  width: 260px;
+  width: auto;
 }
 
 .post-detail__main {
-  flex: 1 1 auto;
   min-width: 0;
   height: 100%;
   overflow: auto;
