@@ -4,6 +4,8 @@
     :class="{
       'post-detail--single': forceSingleColumn,
       'post-detail--no-sides': !hasAnySidebar,
+      'post-detail--has-left': hasLeftSidebar,
+      'post-detail--has-right': hasRightSidebar,
     }"
   >
     <div class="post-detail__container" ref="containerEl">
@@ -198,10 +200,13 @@ const containerEl = ref<HTMLElement | null>(null)
 const forceSingleColumn = ref(false)
 let ro: ResizeObserver | null = null
 
-const hasAnySidebar = computed(() => (toc.value?.length || 0) > 0 || (related.value?.length || 0) > 0)
+const hasLeftSidebar = computed(() => (toc.value?.length || 0) > 0)
+const hasRightSidebar = computed(() => (related.value?.length || 0) > 0)
+const hasAnySidebar = computed(() => hasLeftSidebar.value || hasRightSidebar.value)
+const sidebarCount = computed(() => (hasLeftSidebar.value ? 1 : 0) + (hasRightSidebar.value ? 1 : 0))
 
 function updateResponsiveByContainerWidth() {
-  // If there's no sidebar at all, always keep single-column centered layout.
+  // If there's no sidebar at all, keep the centered single-column layout.
   if (!hasAnySidebar.value) {
     forceSingleColumn.value = false
     return
@@ -210,11 +215,18 @@ function updateResponsiveByContainerWidth() {
   const el = containerEl.value
   if (!el) return
   const w = el.getBoundingClientRect().width
-  // Minimum 3-col requirement based on CSS vars:
-  // sideMin*2 + main(900) + gap*2. Padding is already inside container width.
-  // Note: container padding is part of its own width, so don't add it here.
-  const min3 = 180 * 2 + 900 + 14 * 2 // = 1288
-  forceSingleColumn.value = w < min3
+
+  // Requirement:
+  // - Desktop: show sidebars + main(900px).
+  // - When container becomes too narrow to keep: main(900) + sideMin*count + gap*count,
+  //   hide sidebars and show only main.
+  const sideMin = 180
+  const mainW = 900
+  const gap = 14
+  const count = sidebarCount.value
+  const minRequired = mainW + sideMin * count + gap * count
+
+  forceSingleColumn.value = w < minRequired
 }
 
 let mdApi: null | {
@@ -533,35 +545,78 @@ function setupTocObserver() {
 }
 
 /* Responsive strategy:
-   - Desktop: 3-column grid.
-   - SIDE columns can shrink (down to --pd-side-min).
-   - MAIN column stays fixed at --pd-main-width as long as sidebars are visible.
-   - If container becomes too narrow, JS adds .post-detail--single to hide sidebars.
-   - Mobile keeps single-column behavior.
+   - Desktop: grid template depends on which sidebars exist.
+   - Side columns can shrink (down to --pd-side-min).
+   - Main column stays fixed at --pd-main-width as long as sidebars are visible.
+   - If container becomes too narrow (computed in JS), .post-detail--single hides sidebars.
 */
 
+/* Desktop enhancement: keep only the middle column scrollable for 2/3-column layouts.
+   This avoids changing overall app scroll position when browsing toc/related.
+*/
+@media (min-width: 769px) {
+  /* keep main fixed when sidebars exist */
+  .post-detail--has-left:not(.post-detail--single) .post-detail__main,
+  .post-detail--has-right:not(.post-detail--single) .post-detail__main {
+    width: var(--pd-main-width);
+    max-width: var(--pd-main-width);
+    margin: 0;
+  }
 
-/* Mobile: single-column and let the page grow naturally. */
+  /* single column: let it shrink with viewport */
+  .post-detail--single .post-detail__main,
+  .post-detail--no-sides .post-detail__main {
+    width: 100%;
+    max-width: var(--pd-main-width);
+    margin: 0 auto;
+  }
+
+  /* Two sidebars */
+  .post-detail--has-left.post-detail--has-right:not(.post-detail--single) .post-detail__shell {
+    grid-template-columns:
+      clamp(var(--pd-side-min), 18vw, 260px)
+      var(--pd-main-width)
+      clamp(var(--pd-side-min), 18vw, 260px);
+  }
+
+  /* Only left sidebar */
+  .post-detail--has-left:not(.post-detail--has-right):not(.post-detail--single) .post-detail__shell {
+    grid-template-columns:
+      clamp(var(--pd-side-min), 18vw, 260px)
+      var(--pd-main-width);
+  }
+
+  /* Only right sidebar */
+  .post-detail--has-right:not(.post-detail--has-left):not(.post-detail--single) .post-detail__shell {
+    grid-template-columns:
+      var(--pd-main-width)
+      clamp(var(--pd-side-min), 18vw, 260px);
+  }
+}
+
+/* Mobile: keep the page fully fluid */
 @media (max-width: 768px) {
   .post-detail__container {
-    padding: 12px 12px;
+    max-width: 100%;
+    width: 100%;
+    padding-left: 12px;
+    padding-right: 12px;
   }
 
-  .post-detail__shell {
-    height: auto;
-    gap: 0;
-    display: block; /* avoid any grid/flex quirks */
+  .post-detail__content {
+    width: 100%;
   }
 
-  .post-detail__left,
-  .post-detail__right {
-    display: none;
+  /* make long words/links/code not blow up width */
+  .post-detail :deep(.md),
+  .post-detail :deep(.el-card) {
+    overflow-wrap: anywhere;
+    word-break: break-word;
   }
 
-  .post-detail__main {
-    height: auto;
-    overflow: visible;
-    padding-right: 0;
+  .post-detail :deep(pre),
+  .post-detail :deep(code) {
+    white-space: pre-wrap;
   }
 }
 
@@ -571,36 +626,35 @@ function setupTocObserver() {
   padding: 16px var(--pd-container-pad);
 }
 
+/* Base shell grid (must exist regardless of sidebars). */
 .post-detail__shell {
   display: grid;
   align-items: start;
   gap: var(--pd-gap);
-  overflow: visible;
-  height: calc(100vh - var(--app-topbar-h, 120px));
 
-  /* Sidebars shrink first; main stays fixed while sidebars exist. */
-  grid-template-columns:
-    clamp(var(--pd-side-min), 18vw, 260px)
-    minmax(var(--pd-main-width), var(--pd-main-width))
-    clamp(var(--pd-side-min), 18vw, 260px);
-
+  /* Default: single column; modifiers will override */
+  grid-template-columns: 1fr;
   justify-content: center;
+
+  /* Default: natural page flow */
+  height: auto;
+  overflow: visible;
 }
 
-.post-detail__left,
-.post-detail__right {
-  width: auto;
+/* Extra safety: prevent any layout from causing horizontal overflow.
+   This is the root cause of the 'left thin strip + huge blank area' when the viewport is narrow.
+*/
+.post-detail {
+  overflow-x: hidden;
 }
 
+.post-detail__shell,
 .post-detail__main {
   min-width: 0;
-  height: 100%;
-  overflow: auto;
-  padding-right: 6px;
 }
 
 .post-detail__content {
-  margin-bottom: 14px;
+  min-width: 0;
 }
 
 .post-hero {

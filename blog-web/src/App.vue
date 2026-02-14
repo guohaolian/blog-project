@@ -25,32 +25,6 @@
                   size="small"
                   @change="(v: any) => theme.setMode(v)"
                 />
-
-                <div v-if="theme.mode === 'auto'" class="app-theme__window">
-                  <el-tooltip content="Dark window start (HH:mm)" placement="bottom">
-                    <el-input
-                      v-model="autoStart"
-                      size="small"
-                      class="app-theme__time"
-                      placeholder="19:00"
-                      maxlength="5"
-                      @blur="applyAutoWindow"
-                      @keyup.enter="applyAutoWindow"
-                    />
-                  </el-tooltip>
-                  <span class="app-theme__sep">~</span>
-                  <el-tooltip content="Dark window end (HH:mm)" placement="bottom">
-                    <el-input
-                      v-model="autoEnd"
-                      size="small"
-                      class="app-theme__time"
-                      placeholder="07:00"
-                      maxlength="5"
-                      @blur="applyAutoWindow"
-                      @keyup.enter="applyAutoWindow"
-                    />
-                  </el-tooltip>
-                </div>
               </div>
             </el-tooltip>
           </div>
@@ -142,7 +116,6 @@ import {
   Link,
   Search,
 } from '@element-plus/icons-vue'
-import { ElMessage } from 'element-plus'
 
 const site = useSiteStore()
 const theme = useThemeStore()
@@ -155,20 +128,7 @@ const themeOptions = [
   { label: 'Dark', value: 'dark', showsIcon: true, icon: Moon },
 ]
 
-const autoStart = ref(theme.autoWindow.start)
-const autoEnd = ref(theme.autoWindow.end)
-
-function applyAutoWindow() {
-  const start = (autoStart.value || '').trim()
-  const end = (autoEnd.value || '').trim()
-  if (!/^\d{2}:\d{2}$/.test(start) || !/^\d{2}:\d{2}$/.test(end)) {
-    ElMessage.warning('Time format should be HH:mm (e.g. 19:00)')
-    autoStart.value = theme.autoWindow.start
-    autoEnd.value = theme.autoWindow.end
-    return
-  }
-  theme.setAutoWindow({ start, end })
-}
+// Auto: schedule-based dark window.
 
 const backToTopTarget = computed(() => {
   // PostDetailView uses an inner scroll container
@@ -399,19 +359,6 @@ html.dark .app-topbar__notice {
   gap: 8px;
 }
 
-.app-theme__window {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.app-theme__time {
-  width: 74px;
-}
-
-.app-theme__sep {
-  opacity: 0.7;
-}
 
 .app-page {
   padding-top: 14px;
@@ -448,7 +395,7 @@ html.dark .app-topbar__notice {
 
 .app-mobile-menu__panel {
   width: 100%;
-  //max-width: 480px;
+  /* max-width: 480px; */
 
   /* shrink height so it doesn't feel oversized */
   max-height: min(620px, calc(100dvh - 28px));
