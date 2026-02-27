@@ -5,24 +5,31 @@
       <div style="display:flex;gap:8px">
         <el-button size="small" :loading="loading" @click="fetchList">Refresh</el-button>
         <el-button size="small" type="primary" @click="openCreate">New Admin</el-button>
+        <el-button size="small" @click="resetColumnOrder">Reset Columns</el-button>
       </div>
     </div>
 
-    <el-table :data="list" v-loading="loading" style="width:100%" size="small">
-      <el-table-column prop="id" label="ID" width="80" />
-      <el-table-column prop="username" label="Username" width="160" />
-      <el-table-column prop="displayName" label="Display Name" min-width="160" />
-      <el-table-column prop="status" label="Status" width="110">
-        <template #default="{ row }">
+    <el-table ref="tableRef" :data="list" v-loading="loading" style="width:100%" size="small">
+      <el-table-column
+        v-for="col in orderedColumns"
+        :key="col.key"
+        :prop="col.prop"
+        :label="col.label"
+        :width="col.width"
+        :min-width="col.minWidth"
+        :fixed="col.fixed"
+        :align="col.align"
+        :show-overflow-tooltip="col.showOverflowTooltip"
+        :data-col-key="col.key"
+      >
+
+        <template v-if="col.slot === 'status'" #default="{ row }">
           <el-tag :type="row.status === 1 ? 'success' : 'info'">
             {{ row.status === 1 ? 'ENABLED' : 'DISABLED' }}
           </el-tag>
         </template>
-      </el-table-column>
-      <el-table-column prop="createdAt" label="Created" width="170" />
-      <el-table-column prop="updatedAt" label="Updated" width="170" />
-      <el-table-column label="Actions" width="260">
-        <template #default="{ row }">
+
+        <template v-else-if="col.slot === 'actions'" #default="{ row }">
           <el-button size="small" @click="openReset(row)">Reset Password</el-button>
           <el-button
             size="small"
@@ -74,12 +81,13 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, reactive, ref } from 'vue'
+import { onMounted, reactive, ref, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import * as AdminApi from '../api/admins'
 import { useAuthStore } from '../stores/auth'
 import { useRouter } from 'vue-router'
 import { useAsyncTask, runWithErrorToast } from '../utils/requestHelpers'
+import { useDraggableTableColumns, type DraggableTableColumn } from '../utils/useDraggableTableColumns'
 
 const saving = ref(false)
 const list = ref<AdminApi.AdminUserVO[]>([])
@@ -214,5 +222,25 @@ async function toggle(row: AdminApi.AdminUserVO) {
   }
 }
 
+const tableRef = ref()
+
+const columns = computed<DraggableTableColumn[]>(() => [
+  { key: 'id', prop: 'id', label: 'ID', width: 80 },
+  { key: 'username', prop: 'username', label: 'Username', width: 160 },
+  { key: 'displayName', prop: 'displayName', label: 'Display Name', minWidth: 160 },
+  { key: 'status', label: 'Status', width: 110, slot: 'status' },
+  { key: 'createdAt', prop: 'createdAt', label: 'Created', width: 170 },
+  { key: 'updatedAt', prop: 'updatedAt', label: 'Updated', width: 170 },
+  { key: 'actions', label: 'Actions', width: 260, slot: 'actions' },
+])
+
+const { orderedColumns, resetOrder: resetColumnOrder } = useDraggableTableColumns(tableRef, columns as any, {
+  storageKey: 'admin.table.columnsOrder.admins',
+  lockKeys: [],
+})
+
 onMounted(fetchList)
 </script>
+
+<style scoped>
+</style>

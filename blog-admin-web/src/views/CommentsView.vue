@@ -2,7 +2,10 @@
   <div style="padding: 16px">
     <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px">
       <h2 style="margin: 0">Comments</h2>
-      <el-button size="small" :loading="loading" @click="fetchList">Refresh</el-button>
+      <div style="display:flex;gap:8px">
+        <el-button size="small" @click="resetColumnOrder">Reset Columns</el-button>
+        <el-button size="small" :loading="loading" @click="fetchList">Refresh</el-button>
+      </div>
     </div>
 
     <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 12px">
@@ -24,26 +27,30 @@
       <el-button @click="onFilterChange">Apply</el-button>
     </div>
 
-    <el-table :data="list" v-loading="loading" style="width: 100%" size="small">
-      <el-table-column prop="id" label="ID" width="50" />
-      <el-table-column label="Post" min-width="140">
-        <template #default="{ row }">
+    <el-table ref="tableRef" :data="list" v-loading="loading" style="width: 100%" size="small">
+      <el-table-column
+        v-for="col in orderedColumns"
+        :key="col.key"
+        :prop="col.prop"
+        :label="col.label"
+        :width="col.width"
+        :min-width="col.minWidth"
+        :fixed="col.fixed"
+        :align="col.align"
+        :show-overflow-tooltip="col.showOverflowTooltip"
+        :data-col-key="col.key"
+      >
+        <template v-if="col.slot === 'post'" #default="{ row }">
           <div style="font-weight: 600">#{{ row.postId }} {{ row.postTitle || '' }}</div>
         </template>
-      </el-table-column>
-      <el-table-column prop="nickname" label="Nickname" width="110" />
-      <el-table-column prop="email" label="Email" width="180" />
-      <el-table-column prop="status" label="Status" width="110" />
-      <el-table-column prop="createdAt" label="Created" width="170" />
-      <el-table-column label="Content" min-width="250">
-        <template #default="{ row }">
+
+        <template v-else-if="col.slot === 'content'" #default="{ row }">
           <div style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 520px">
             {{ row.content }}
           </div>
         </template>
-      </el-table-column>
-      <el-table-column label="Actions" width="290">
-        <template #default="{ row }">
+
+        <template v-else-if="col.slot === 'actions'" #default="{ row }">
           <el-button size="small" type="success" :disabled="row.status === 'APPROVED'" @click="approve(row.id)">
             Approve
           </el-button>
@@ -73,7 +80,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, reactive, ref, watch } from 'vue'
+import { onMounted, reactive, ref, watch, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useRoute, useRouter } from 'vue-router'
 import {
@@ -84,6 +91,7 @@ import {
   type AdminCommentVO,
 } from '../api/comments'
 import { useAsyncTask } from '../utils/requestHelpers'
+import { useDraggableTableColumns, type DraggableTableColumn } from '../utils/useDraggableTableColumns'
 
 const router = useRouter()
 const route = useRoute()
@@ -179,4 +187,21 @@ watch(
     fetchList()
   },
 )
+
+const tableRef = ref()
+
+const columns = computed<DraggableTableColumn[]>(() => [
+  { key: 'id', prop: 'id', label: 'ID', width: 50 },
+  { key: 'post', label: 'Post', minWidth: 140, slot: 'post' },
+  { key: 'nickname', prop: 'nickname', label: 'Nickname', width: 110 },
+  { key: 'email', prop: 'email', label: 'Email', width: 180, showOverflowTooltip: true },
+  { key: 'status', prop: 'status', label: 'Status', width: 110 },
+  { key: 'createdAt', prop: 'createdAt', label: 'Created', width: 170 },
+  { key: 'content', label: 'Content', minWidth: 250, slot: 'content' },
+  { key: 'actions', label: 'Actions', width: 290, slot: 'actions' },
+])
+
+const { orderedColumns, resetOrder: resetColumnOrder } = useDraggableTableColumns(tableRef, columns as any, {
+  storageKey: 'admin.table.columnsOrder.comments',
+})
 </script>

@@ -8,21 +8,28 @@
       </el-select>
       <el-button type="primary" @click="onSearch">Search</el-button>
       <div style="flex: 1" />
+      <el-button size="small" @click="resetColumnOrder">Reset Columns</el-button>
       <el-button type="success" @click="$router.push('/admin/posts/new')">New Post</el-button>
     </div>
 
-    <el-table :data="list" v-loading="loading" border>
-      <el-table-column prop="id" label="ID" width="80" />
-      <el-table-column prop="title" label="Title" />
-      <el-table-column prop="status" label="Status" width="120" />
-      <el-table-column label="Category" width="160">
-        <template #default="{ row }">
+    <el-table ref="tableRef" :data="list" v-loading="loading" border>
+      <el-table-column
+        v-for="col in orderedColumns"
+        :key="col.key"
+        :prop="col.prop"
+        :label="col.label"
+        :width="col.width"
+        :min-width="col.minWidth"
+        :fixed="col.fixed"
+        :align="col.align"
+        :show-overflow-tooltip="col.showOverflowTooltip"
+        :data-col-key="col.key"
+      >
+        <template v-if="col.slot === 'category'" #default="{ row }">
           {{ row.category?.name || '-' }}
         </template>
-      </el-table-column>
-      <el-table-column prop="updatedAt" label="Updated" width="180" />
-      <el-table-column label="Actions" width="260">
-        <template #default="{ row }">
+
+        <template v-else-if="col.slot === 'actions'" #default="{ row }">
           <el-button size="small" @click="$router.push(`/admin/posts/${row.id}/edit`)">Edit</el-button>
           <el-button
             v-if="row.status !== 'PUBLISHED'"
@@ -59,11 +66,12 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { adminPostDelete, adminPostPage, adminPostPublish, adminPostUnpublish } from '../api/posts'
 import { useAsyncTask } from '../utils/requestHelpers'
+import { useDraggableTableColumns, type DraggableTableColumn } from '../utils/useDraggableTableColumns'
 import type { AdminPostListItemVO } from '../api/posts'
 
 const router = useRouter()
@@ -149,6 +157,21 @@ async function remove(id: number) {
   ElMessage.success('Deleted')
   fetchList()
 }
+
+const tableRef = ref()
+
+const columns = computed<DraggableTableColumn[]>(() => [
+  { key: 'id', prop: 'id', label: 'ID', width: 80 },
+  { key: 'title', prop: 'title', label: 'Title', minWidth: 200, showOverflowTooltip: true },
+  { key: 'status', prop: 'status', label: 'Status', width: 120 },
+  { key: 'category', label: 'Category', width: 160, slot: 'category' },
+  { key: 'updatedAt', prop: 'updatedAt', label: 'Updated', width: 180 },
+  { key: 'actions', label: 'Actions', width: 260, slot: 'actions' },
+])
+
+const { orderedColumns, resetOrder: resetColumnOrder } = useDraggableTableColumns(tableRef, columns as any, {
+  storageKey: 'admin.table.columnsOrder.posts',
+})
 
 onMounted(() => {
   initFromQuery()

@@ -2,7 +2,10 @@
   <div style="padding: 16px">
     <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px">
       <h2 style="margin: 0">Resources</h2>
-      <el-button size="small" :loading="loading" @click="fetchList">Refresh</el-button>
+      <div style="display:flex;gap:8px">
+        <el-button size="small" @click="resetColumnOrder">Reset Columns</el-button>
+        <el-button size="small" :loading="loading" @click="fetchList">Refresh</el-button>
+      </div>
     </div>
 
     <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px">
@@ -25,10 +28,20 @@
       <el-button @click="onFilterChange">Apply</el-button>
     </div>
 
-    <el-table :data="list" v-loading="loading" style="width: 100%" size="small">
-      <el-table-column prop="id" label="ID" width="80" />
-      <el-table-column label="Preview" min-width="220">
-        <template #default="{ row }">
+    <el-table ref="tableRef" :data="list" v-loading="loading" style="width: 100%" size="small">
+      <el-table-column
+        v-for="col in orderedColumns"
+        :key="col.key"
+        :prop="col.prop"
+        :label="col.label"
+        :width="col.width"
+        :min-width="col.minWidth"
+        :fixed="col.fixed"
+        :align="col.align"
+        :show-overflow-tooltip="col.showOverflowTooltip"
+        :data-col-key="col.key"
+      >
+        <template v-if="col.slot === 'preview'" #default="{ row }">
           <div style="display:flex;align-items:center;gap:10px">
             <el-image
               v-if="isImage(row.contentType)"
@@ -43,16 +56,12 @@
             </a>
           </div>
         </template>
-      </el-table-column>
-      <el-table-column prop="contentType" label="Content-Type" width="160" />
-      <el-table-column label="Size" width="110">
-        <template #default="{ row }">
+
+        <template v-else-if="col.slot === 'size'" #default="{ row }">
           {{ formatSize(row.size) }}
         </template>
-      </el-table-column>
-      <el-table-column prop="createdAt" label="Created" width="170" />
-      <el-table-column label="Actions" width="220">
-        <template #default="{ row }">
+
+        <template v-else-if="col.slot === 'actions'" #default="{ row }">
           <el-button size="small" @click="copyLink(row.url)">Copy</el-button>
           <el-popconfirm title="Delete this resource?" @confirm="remove(row.id)">
             <template #reference>
@@ -79,10 +88,11 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { adminResourceDelete, adminResourcePage, type FileResourceVO } from '../api/resources'
 import { useAsyncTask, runWithErrorToast } from '../utils/requestHelpers'
+import { useDraggableTableColumns, type DraggableTableColumn } from '../utils/useDraggableTableColumns'
 
 const list = ref<FileResourceVO[]>([])
 const total = ref(0)
@@ -174,6 +184,21 @@ async function copyLink(url: string) {
     ElMessage.error('Copy failed')
   }
 }
+
+const tableRef = ref()
+
+const columns = computed<DraggableTableColumn[]>(() => [
+  { key: 'id', prop: 'id', label: 'ID', width: 80 },
+  { key: 'preview', label: 'Preview', minWidth: 220, slot: 'preview' },
+  { key: 'contentType', prop: 'contentType', label: 'Content-Type', width: 160 },
+  { key: 'size', label: 'Size', width: 110, slot: 'size' },
+  { key: 'createdAt', prop: 'createdAt', label: 'Created', width: 170 },
+  { key: 'actions', label: 'Actions', width: 220, slot: 'actions' },
+])
+
+const { orderedColumns, resetOrder: resetColumnOrder } = useDraggableTableColumns(tableRef, columns as any, {
+  storageKey: 'admin.table.columnsOrder.resources',
+})
 
 onMounted(fetchList)
 </script>

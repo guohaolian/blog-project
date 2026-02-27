@@ -2,14 +2,23 @@
   <div style="padding: 16px">
     <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px">
       <h2 style="margin: 0">Tags</h2>
-      <el-button type="primary" @click="openCreate">New</el-button>
+      <div style="display:flex;gap:8px">
+        <el-button size="small" @click="resetColumnOrder">Reset Columns</el-button>
+        <el-button type="primary" @click="openCreate">New</el-button>
+      </div>
     </div>
 
-    <el-table :data="list" v-loading="loading" style="width: 100%" size="small">
-      <el-table-column prop="id" label="ID" width="80" />
-      <el-table-column prop="name" label="Name" />
-      <el-table-column label="Actions" width="220">
-        <template #default="{ row }">
+    <el-table ref="tableRef" :data="list" v-loading="loading" style="width: 100%" size="small">
+      <el-table-column
+        v-for="col in orderedColumns"
+        :key="col.key"
+        :prop="col.prop"
+        :label="col.label"
+        :width="col.width"
+        :min-width="col.minWidth"
+        :data-col-key="col.key"
+      >
+        <template v-if="col.slot === 'actions'" #default="{ row }">
           <el-button size="small" @click="openEdit(row)">Edit</el-button>
           <el-popconfirm title="Delete this tag?" @confirm="remove(row.id)">
             <template #reference>
@@ -35,10 +44,11 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref } from 'vue'
+import { reactive, ref, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import * as TagsApi from '../api/tags'
 import { useAsyncTask } from '../utils/requestHelpers'
+import { useDraggableTableColumns, type DraggableTableColumn } from '../utils/useDraggableTableColumns'
 
 const { loading, run: fetchList } = useAsyncTask(
   async () => {
@@ -99,6 +109,18 @@ async function remove(id: number) {
   ElMessage.success('Deleted')
   await fetchList()
 }
+
+const tableRef = ref()
+
+const columns = computed<DraggableTableColumn[]>(() => [
+  { key: 'id', prop: 'id', label: 'ID', width: 80 },
+  { key: 'name', prop: 'name', label: 'Name', minWidth: 160, showOverflowTooltip: true },
+  { key: 'actions', label: 'Actions', width: 220, slot: 'actions' },
+])
+
+const { orderedColumns, resetOrder: resetColumnOrder } = useDraggableTableColumns(tableRef, columns as any, {
+  storageKey: 'admin.table.columnsOrder.tags',
+})
 
 fetchList()
 </script>
