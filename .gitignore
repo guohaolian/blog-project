@@ -21,3 +21,6 @@ target/
 *.tmp
 *.temp
 *.swp
+
+# ReCode local database
+.recode

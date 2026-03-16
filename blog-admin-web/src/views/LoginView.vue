@@ -4,83 +4,69 @@
     <div class="login-bg-grid" aria-hidden="true" />
     <div class="login-bg-noise" aria-hidden="true" />
 
-    <div class="login-card" role="main">
-      <div class="login-theme">
-        <el-tooltip :content="theme.isDark ? 'Switch to light' : 'Switch to dark'" placement="bottom">
-          <el-button circle text class="login-theme-btn" @click="theme.toggle()">
-            <el-icon size="18">
-              <component :is="theme.isDark ? Sunny : Moon" />
-            </el-icon>
-          </el-button>
-        </el-tooltip>
-      </div>
-
-      <div class="login-brand">
-        <div class="login-title">Blog Admin</div>
-        <div class="login-subtitle">Sign in to continue</div>
-      </div>
-
-      <el-form
-        ref="formRef"
-        class="login-form"
-        :model="form"
-        :rules="rules"
-        label-position="top"
-        @submit.prevent
-      >
-        <el-form-item label="Username" prop="username">
-          <el-input
-            ref="usernameInputRef"
-            v-model="form.username"
-            size="large"
-            autocomplete="username"
-            @keyup.enter="handleLogin"
-          />
-        </el-form-item>
-
-        <el-form-item label="Password" prop="password">
-          <el-input
-            v-model="form.password"
-            size="large"
-            type="password"
-            autocomplete="current-password"
-            show-password
-            @keyup.enter="handleLogin"
-          />
-        </el-form-item>
-
-        <div class="login-messages">
-          <el-alert
-            v-if="errorMsg"
-            type="error"
-            :title="errorMsg"
-            show-icon
-            :closable="false"
-          />
-
-          <el-alert
-            v-if="showSeedHint"
-            class="login-hint"
-            type="info"
-            title="Default seed account: admin / admin123"
-            show-icon
-            :closable="false"
-          />
+    <div class="login-left" aria-hidden="true">
+      <div class="login-left-inner">
+        <div class="login-left-brand">
+          <div class="login-left-title">Blog Admin</div>
+          <div class="login-left-subtitle">Sign in to continue</div>
         </div>
 
-        <el-button
-          class="login-submit"
-          type="primary"
-          size="large"
-          :loading="loading"
-          @click="handleLogin"
-        >
-          Login
-        </el-button>
-      </el-form>
+        <AnimatedCharacters :isTyping="isTyping" :showPassword="showPassword" :passwordLength="form.password.length"
+          :loginFailed="loginFailed" :loginSuccess="loginSuccess" />
+      </div>
+    </div>
 
-      <div class="login-footer">
-        <span>© {{ new Date().getFullYear() }} Blog</span>
+    <div class="login-right">
+
+      <div class="login-card" role="main">
+        <div class="login-theme">
+          <el-tooltip :content="theme.isDark ? 'Switch to light' : 'Switch to dark'" placement="bottom">
+            <el-button circle text class="login-theme-btn" @click="theme.toggle()">
+              <el-icon size="18">
+                <component :is="theme.isDark ? Sunny : Moon" />
+              </el-icon>
+            </el-button>
+          </el-tooltip>
+        </div>
+
+        <div class="login-brand">
+          <div class="login-title">Blog Admin</div>
+          <div class="login-subtitle">Sign in to continue</div>
+        </div>
+
+        <el-form ref="formRef" class="login-form" :model="form" :rules="rules" label-position="top" @submit.prevent>
+          <el-form-item label="Username" prop="username">
+            <el-input ref="usernameInputRef" v-model="form.username" size="large" autocomplete="username"
+              @focus="isTyping = true" @blur="isTyping = false" @keyup.enter="handleLogin" />
+          </el-form-item>
+
+          <el-form-item label="Password" prop="password">
+            <el-input v-model="form.password" size="large" :type="showPassword ? 'text' : 'password'"
+              autocomplete="current-password" @focus="isTyping = true" @blur="isTyping = false"
+              @keyup.enter="handleLogin">
+              <template #suffix>
+                <el-icon class="login-password-toggle" @mousedown.prevent @click="showPassword = !showPassword">
+                  <component :is="showPassword ? View : Hide" />
+                </el-icon>
+              </template>
+            </el-input>
+          </el-form-item>
+
+          <div class="login-messages">
+            <el-alert v-if="errorMsg" type="error" :title="errorMsg" show-icon :closable="false" />
+
+            <el-alert v-if="showSeedHint" class="login-hint" type="info" title="Default seed account: admin / admin123"
+              show-icon :closable="false" />
+          </div>
+
+          <el-button class="login-submit" type="primary" size="large" :loading="loading" @click="handleLogin">
+            Login
+          </el-button>
+        </el-form>
+
+        <div class="login-footer">
+          <span>© {{ new Date().getFullYear() }} Blog</span>
+        </div>
       </div>
     </div>
   </div>
@@ -92,7 +78,8 @@ import { useRoute, useRouter } from 'vue-router'
 import type { FormInstance, FormRules } from 'element-plus'
 import { useAuthStore } from '../stores/auth'
 import { useThemeStore } from '../stores/theme'
-import { Moon, Sunny } from '@element-plus/icons-vue'
+import { Moon, Sunny, View, Hide } from '@element-plus/icons-vue'
+import AnimatedCharacters from '../components/animated-login/AnimatedCharacters.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -114,6 +101,14 @@ const rules: FormRules = {
 const loading = ref(false)
 const errorMsg = ref('')
 
+const isTyping = ref(false)
+const showPassword = ref(false)
+const loginFailed = ref(false)
+const loginSuccess = ref(false)
+
+let failedTimer: number | undefined
+let successTimer: number | undefined
+
 const usernameInputRef = ref<{ focus?: () => void }>()
 
 onMounted(async () => {
@@ -123,6 +118,11 @@ onMounted(async () => {
 
 async function handleLogin() {
   errorMsg.value = ''
+  loginFailed.value = false
+  loginSuccess.value = false
+
+  if (failedTimer) window.clearTimeout(failedTimer)
+  if (successTimer) window.clearTimeout(successTimer)
 
   const ok = await formRef.value?.validate().catch(() => false)
   if (!ok) return
@@ -130,6 +130,11 @@ async function handleLogin() {
   loading.value = true
   try {
     await auth.login(form.username, form.password)
+
+    loginSuccess.value = true
+    successTimer = window.setTimeout(() => {
+      loginSuccess.value = false
+    }, 6000)
 
     // best-effort preload; guard will also validate token
     try {
@@ -142,6 +147,11 @@ async function handleLogin() {
     router.replace(redirect)
   } catch (e: any) {
     errorMsg.value = e?.message || 'Login failed'
+
+    loginFailed.value = true
+    failedTimer = window.setTimeout(() => {
+      loginFailed.value = false
+    }, 3000)
   } finally {
     loading.value = false
   }
@@ -154,10 +164,60 @@ const showSeedHint = import.meta.env.DEV
 .login-page {
   min-height: 100vh;
   display: grid;
-  place-items: center;
-  padding: 24px;
+  grid-template-columns: 1fr 1fr;
+  align-items: stretch;
+  padding: 0;
   position: relative;
   overflow: hidden;
+}
+
+.login-left {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: stretch;
+  justify-content: flex-end;
+  padding: 42px 100px 42px 24px;
+}
+
+.login-left-inner {
+  width: min(720px, 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
+.login-left-brand {
+  position: absolute;
+  top: 24px;
+  left: 0;
+  right: 0;
+  display: grid;
+  gap: 6px;
+  color: var(--admin-text);
+  text-align: center;
+}
+
+.login-left-title {
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: 0.2px;
+}
+
+.login-left-subtitle {
+  font-size: 13px;
+  color: var(--admin-muted);
+}
+
+.login-right {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 24px 24px 24px 100px;
 }
 
 .login-bg {
@@ -253,6 +313,15 @@ const showSeedHint = import.meta.env.DEV
   margin-top: 12px;
 }
 
+.login-password-toggle {
+  cursor: pointer;
+  color: var(--admin-muted);
+}
+
+.login-password-toggle:hover {
+  color: var(--admin-text);
+}
+
 .login-messages {
   display: grid;
   gap: 10px;
@@ -276,5 +345,27 @@ const showSeedHint = import.meta.env.DEV
   font-size: 12px;
   color: var(--admin-muted);
   text-align: center;
+}
+
+@media (max-height: 780px) {
+  .login-left-inner {
+    padding-top: 8px;
+    padding-bottom: 8px;
+  }
+
+  .login-left :deep(.animated-characters-container) {
+    transform: scale(0.9);
+    transform-origin: center bottom;
+  }
+}
+
+@media (max-width: 1024px) {
+  .login-page {
+    grid-template-columns: 1fr;
+  }
+
+  .login-left {
+    display: none;
+  }
 }
 </style>
