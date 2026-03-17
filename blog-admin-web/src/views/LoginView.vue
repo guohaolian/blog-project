@@ -36,8 +36,8 @@
 
         <el-form ref="formRef" class="login-form" :model="form" :rules="rules" label-position="top" @submit.prevent>
           <el-form-item label="Username" prop="username">
-            <el-input ref="usernameInputRef" v-model="form.username" size="large" autocomplete="username"
-              @focus="isTyping = true" @blur="isTyping = false" @keyup.enter="handleLogin" />
+            <el-input v-model="form.username" size="large" autocomplete="username" @focus="isTyping = true"
+              @blur="isTyping = false" @keyup.enter="handleLogin" />
           </el-form-item>
 
           <el-form-item label="Password" prop="password">
@@ -73,7 +73,7 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref, nextTick, onMounted } from 'vue'
+import { reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import type { FormInstance, FormRules } from 'element-plus'
 import { useAuthStore } from '../stores/auth'
@@ -89,8 +89,8 @@ const theme = useThemeStore()
 const formRef = ref<FormInstance>()
 
 const form = reactive({
-  username: 'admin',
-  password: 'admin123',
+  username: '',
+  password: '',
 })
 
 const rules: FormRules = {
@@ -109,12 +109,6 @@ const loginSuccess = ref(false)
 let failedTimer: number | undefined
 let successTimer: number | undefined
 
-const usernameInputRef = ref<{ focus?: () => void }>()
-
-onMounted(async () => {
-  await nextTick()
-  usernameInputRef.value?.focus?.()
-})
 
 async function handleLogin() {
   errorMsg.value = ''
