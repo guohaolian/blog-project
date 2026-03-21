@@ -10,8 +10,11 @@
 
 server {
     # Make this server the default for IP access (no domain)
-    listen 80 default_server;
-    server_name _;
+    #listen 80 default_server;
+    #server_name _;
+
+    listen 80;
+    server_name guohaolian.xyz;
 
     client_max_body_size 20m;
 

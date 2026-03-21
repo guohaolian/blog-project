@@ -258,6 +258,97 @@ sudo systemctl status nginx --no-pager
 sudo ss -lntp | grep -E ':80|:8080|:3306' || true
 
 # 3) 健康
+
+```
+
+---
+
+## 5) 域名访问验证与常见排错（`www.guohaolian.xyz`）
+
+当服务器已绑定并解析域名后，建议把验收分成两层：
+
+1) **服务器本机**验证（排除 DNS/证书/公网链路问题）
+2) **域名外网**验证（确认 Nginx server_name/证书/跳转都正确）
+
+### 5.1 服务器本机验证（不依赖 DNS）
+
+```bash
+# 后端直连：排除 nginx 干扰
+curl -i http://127.0.0.1:8080/api/health
+
+# 走 nginx（生产真实入口）
+curl -i http://127.0.0.1/api/health
+
+# 前台/后台的静态站点（只取响应头即可）
+curl -I http://127.0.0.1/
+curl -I http://127.0.0.1/admin/
+
+# uploads（把路径换成真实存在的文件）
+# curl -I http://127.0.0.1/uploads/202602/xxx.jpg
+```
+
+### 5.2 域名外网验证（从你的电脑/或服务器上带 Host）
+
+在服务器上也可以直接用域名访问（前提是 DNS 已生效）：
+
+```bash
+curl -I http://www.guohaolian.xyz/
+curl -I http://www.guohaolian.xyz/admin/
+curl -i http://www.guohaolian.xyz/api/health
+```
+
+如果启用了 HTTPS，再补充：
+
+```bash
+curl -I https://www.guohaolian.xyz/
+curl -I https://www.guohaolian.xyz/admin/
+curl -i https://www.guohaolian.xyz/api/health
+```
+
+### 5.3 域名场景最常见的 4 类问题
+
+#### (1) 命中错误的 Nginx server 块
+
+现象：
+- 首页能打开，但 `/uploads/**` 404 或 `/admin/` 刷新报 base URL；
+- 或 `/api` 变成 404/502。
+
+排查：
+
+```bash
+sudo nginx -T 2>/dev/null | grep -n "server_name" -n
+sudo nginx -T 2>/dev/null | grep -n "server_name www.guohaolian.xyz" -n -B2 -A12
+```
+
+建议：同一个域名的 `/`、`/admin/`、`/api/`、`/uploads/` 尽量合并到一个 `server {}`。
+
+#### (2) DNS 未生效 / 解析错误
+
+```bash
+nslookup www.guohaolian.xyz || true
+```
+
+期望返回你的 ECS 公网 IP。
+
+#### (3) HTTPS 证书/续期问题
+
+```bash
+sudo certbot certificates || true
+sudo certbot renew --dry-run || true
+```
+
+如果申请或续期失败，通常是 80/443 未放行，或 Nginx 配置/站点未正确启用。
+
+#### (4) /uploads 404（磁盘有文件但访问不到）
+
+```bash
+sudo ls -lh /opt/blog/uploads | head
+sudo nginx -T 2>/dev/null | grep -n "location \^~ /uploads/" -n -B2 -A8
+```
+
+关键点：
+- 必须使用 `alias /opt/blog/uploads/;`（尾部 `/` 不能少）
+- 确认你访问的 URL 是 `/uploads/...` 而不是 `/api/uploads/...`
 curl -i http://127.0.0.1:8080/api/health
 curl -i http://127.0.0.1/api/health
 

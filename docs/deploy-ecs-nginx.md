@@ -799,3 +799,139 @@ sudo journalctl -u blog-api -n 200 --no-pager
   - `spring.datasource.password`
   - `app.jwt.secret`
   - （确认）`app.upload.dir=/opt/blog/uploads`
+
+---
+
+## 16) 已绑定域名 `guohaolian.xyz`：上线推荐配置（Nginx 单域名 + /admin 子路径）
+
+如果你已经把域名解析到 ECS 公网 IP（例如 `guohaolian.xyz`），推荐按本章节把 Nginx 配置切到“单域名承载三端”。
+
+最终访问形态：
+
+- 前台：`http(s)://guohaolian.xyz/`
+- 后台：`http(s)://guohaolian.xyz/admin/`
+- 后端：`http(s)://guohaolian.xyz/api/...`
+- 图片：`http(s)://guohaolian.xyz/uploads/...`
+
+> 重要：建议只启用一个目标 `server {}` 来处理 `/`、`/admin/`、`/api/`、`/uploads/`。
+> 如果你同时启用了多个 server（例如 legacy 示例里的“dual domain”），可能会命中错误 server 块，从而出现：
+> - `/uploads/**` 明明磁盘有文件但一直 404
+> - `/admin/` 刷新出现 base URL 提示（public base URL of /admin/ ...）
+> - `/api` 反代不生效/502
+
+### 16.1 DNS 与安全组检查
+
+1) DNS：确认 `guohaolian.xyz` 的 A 记录指向 ECS 公网 IP。
+
+2) 安全组放行：
+
+- 80/tcp：必须
+- 443/tcp：如果启用 HTTPS
+- 8080/tcp：**不建议对公网开放**（只允许本机访问，由 Nginx 反代）
+
+### 16.2 Nginx（HTTP 80）配置示例（直接可用）
+
+保存到：`/etc/nginx/sites-available/blog.conf`，并启用：
+
+```bash
+sudo ln -sf /etc/nginx/sites-available/blog.conf /etc/nginx/sites-enabled/blog.conf
+sudo nginx -t
+sudo systemctl reload nginx
+```
+
+示例：
+
+```nginx
+server {
+    listen 80;
+    server_name guohaolian.xyz;
+
+    # 上传大图（避免 413），按需调整
+    client_max_body_size 20m;
+
+    # ---------- blog-web (/) ----------
+    location / {
+        root /opt/blog/www/blog-web;
+        try_files $uri $uri/ /index.html;
+    }
+
+    # ---------- blog-admin-web (/admin/) ----------
+    # 注意：后台是部署在 /admin/ 子路径，推荐 alias + try_files 回落到 /admin/index.html
+    location ^~ /admin/ {
+        alias /opt/blog/www/blog-admin-web/;
+        try_files $uri $uri/ /admin/index.html;
+    }
+
+    # ---------- blog-api (/api/) ----------
+    location ^~ /api/ {
+        proxy_pass http://127.0.0.1:8080;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header Authorization $http_authorization;
+    }
+
+    # ---------- uploads (/uploads/) ----------
+    # 重要：用 alias（不要用 root），并且目录必须以 / 结尾
+    location ^~ /uploads/ {
+        alias /opt/blog/uploads/;
+        autoindex off;
+        access_log off;
+        add_header Cache-Control "public, max-age=31536000, immutable";
+        try_files $uri =404;
+    }
+}
+```
+
+### 16.3（推荐）HTTPS 证书申请（certbot）与续期验证
+
+安装：
+
+```bash
+sudo apt update
+sudo apt install -y certbot python3-certbot-nginx
+```
+
+申请证书（自动修改 Nginx 并 reload）：
+
+```bash
+sudo certbot --nginx -d www.guohaolian.xyz
+```
+
+验证续期：
+
+```bash
+sudo certbot renew --dry-run
+```
+
+> 可选：如果你同时有根域 `guohaolian.xyz` 并希望 301 跳转到 www，建议：
+> - 证书申请时：`-d guohaolian.xyz -d www.guohaolian.xyz`
+> - 另加一个 `server_name guohaolian.xyz; return 301 https://www.guohaolian.xyz$request_uri;`
+
+### 16.4 域名场景验收清单（建议每次发布/重启后跑一遍）
+
+1) 确认 Nginx 实际加载了你的域名配置：
+
+```bash
+sudo nginx -T 2>/dev/null | grep -n "server_name guohaolian.xyz" -n -B2 -A12
+```
+
+2) 服务器本机验证（不依赖 DNS）：
+
+```bash
+curl -i http://127.0.0.1:8080/api/health
+curl -i http://127.0.0.1/api/health
+
+# uploads（换成真实存在的文件）
+# curl -I http://127.0.0.1/uploads/202602/xxx.jpg
+```
+
+3) 外网/域名验证：
+
+```bash
+curl -I http://guohaolian.xyz/
+curl -I http://guohaolian.xyz/admin/
+curl -i http://guohaolian.xyz/api/health
+```
+
