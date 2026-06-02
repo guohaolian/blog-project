@@ -187,7 +187,7 @@ const showSeedHint = import.meta.env.DEV
   position: absolute;
   top: 24px;
   left: 0;
-  right: 0;
+  right: 140px;
   display: grid;
   gap: 6px;
   color: var(--admin-text);
@@ -355,11 +355,42 @@ const showSeedHint = import.meta.env.DEV
 
 @media (max-width: 1024px) {
   .login-page {
-    grid-template-columns: 1fr;
+    display: flex;
+    flex-direction: column;
+    min-height: 100dvh;
+    overflow-x: hidden;
+    overflow-y: auto;
   }
 
   .login-left {
     display: none;
+  }
+
+  .login-right {
+    flex: 1;
+    width: 100%;
+    box-sizing: border-box;
+    justify-content: center;
+    align-items: center;
+    padding: max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom));
+  }
+
+  .login-card {
+    width: 100%;
+    max-width: 420px;
+    min-width: 0;
+    box-sizing: border-box;
+    margin-inline: auto;
+    padding: 24px 20px;
+  }
+
+  .login-card::before {
+    inset: -8px;
+  }
+
+  .login-form :deep(.el-form-item),
+  .login-form :deep(.el-input) {
+    min-width: 0;
   }
 }
 </style>
